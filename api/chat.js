@@ -208,6 +208,46 @@ If a user asks where to put an API key, tell them:
         return `<<<EXEC>>>\n${execPayload}\n<<<END_EXEC>>>`;
     }
 
+    // ── Detecting "claimed to act but actually didn't" ──────────────────────
+    // Some providers (Pollinations especially) will sometimes ignore the
+    // instruction to output a real <<<EXEC>>> block and instead just write a
+    // friendly sentence claiming the action was done. That's worse than an
+    // error, since it looks like success. If the user's message clearly
+    // asks for a real action and the response has neither a real EXEC block
+    // nor a browser-permission block, we treat that provider as having
+    // failed this request and fall through to the next one in the waterfall
+    // — the same way a network error already does — rather than returning
+    // text that falsely claims something happened.
+    function looksLikeActionRequest(text) {
+        const lower = (text || '').toLowerCase();
+        return /\b(push|deploy|create a file|make a file|add a file|commit|repo(sitory)?|patch|inject|update (the )?(site|page|file)|github|go to|visit|browse|press|click|navigate)\b/.test(lower);
+    }
+
+    // The set of actions api/execute.js actually understands. A response
+    // that contains an <<<EXEC>>> block isn't automatically "real" — the
+    // model can (and sometimes does) make up an action name that doesn't
+    // exist, like "EXECUTIVE_BROWSE" instead of the real browser-permission
+    // format. Before, any EXEC block at all counted as a real action, which
+    // let a hallucinated, unusable action slip all the way through to
+    // execute.js — which correctly rejected it as "Unknown action", but
+    // only after the user had already seen a pipeline panel claiming
+    // something real was happening. This checks the action name itself, so
+    // a fake one is treated as a failure and falls through to the next
+    // provider in the waterfall, same as a network error would.
+    const KNOWN_EXEC_ACTIONS = ['list_repos', 'read_file_excerpt', 'inject_html', 'patch_file', 'push_file'];
+    function hasRealAction(text) {
+        const execMatch = (text || '').match(/<<<EXEC>>>([\s\S]*?)<<<END_EXEC>>+/);
+        if (execMatch) {
+            try {
+                const parsed = JSON.parse(execMatch[1].trim());
+                return KNOWN_EXEC_ACTIONS.includes(parsed.action);
+            } catch (e) {
+                return false; // malformed JSON inside the block — not a real action either
+            }
+        }
+        return /<<<BROWSER_PERMISSION>>>/.test(text || '');
+    }
+
     for (const provider of providerOrder) {
         try {
             // 1. Pollinations (no key required — first in waterfall)
@@ -222,10 +262,14 @@ If a user asks where to put an API key, tell them:
                 if (polRes.ok) {
                     let text = await polRes.text();
                     text = normalizeProviderText(text);
-                    const { text: cleanText, browserRequest } = extractBrowserBlock(text);
-                    await upsertCache(supabase, prompt, cleanText);
-                    saveHistory(supabase, username, prompt, cleanText);
-                    return res.status(200).json({ result: cleanText, browserRequest, provider: "Pollinations" });
+                    if (looksLikeActionRequest(prompt) && !hasRealAction(text)) {
+                        lastError += "Pollinations claimed action without a real EXEC block | ";
+                    } else {
+                        const { text: cleanText, browserRequest } = extractBrowserBlock(text);
+                        await upsertCache(supabase, prompt, cleanText);
+                        saveHistory(supabase, username, prompt, cleanText);
+                        return res.status(200).json({ result: cleanText, browserRequest, provider: "Pollinations" });
+                    }
                 } else {
                     lastError += "Pollinations Error: " + polRes.statusText + " | ";
                 }
@@ -246,10 +290,14 @@ If a user asks where to put an API key, tell them:
                     if (data.choices?.[0]?.message) {
                         let text = data.choices[0].message.content;
                         text = normalizeProviderText(text);
-                        const { text: cleanText, browserRequest } = extractBrowserBlock(text);
-                        await upsertCache(supabase, prompt, cleanText);
-                        saveHistory(supabase, username, prompt, cleanText);
-                        return res.status(200).json({ result: cleanText, browserRequest, provider: "SambaNova" });
+                        if (looksLikeActionRequest(prompt) && !hasRealAction(text)) {
+                            lastError += "SambaNova claimed action without a real EXEC block | ";
+                        } else {
+                            const { text: cleanText, browserRequest } = extractBrowserBlock(text);
+                            await upsertCache(supabase, prompt, cleanText);
+                            saveHistory(supabase, username, prompt, cleanText);
+                            return res.status(200).json({ result: cleanText, browserRequest, provider: "SambaNova" });
+                        }
                     }
                 } else {
                     lastError += "SambaNova Error: " + sambaRes.statusText + " | ";
@@ -270,10 +318,14 @@ If a user asks where to put an API key, tell them:
                     if (data.candidates?.[0]?.content?.parts?.[0]) {
                         let text = data.candidates[0].content.parts[0].text;
                         text = normalizeProviderText(text);
-                        const { text: cleanText, browserRequest } = extractBrowserBlock(text);
-                        await upsertCache(supabase, prompt, cleanText);
-                        saveHistory(supabase, username, prompt, cleanText);
-                        return res.status(200).json({ result: cleanText, browserRequest, provider: "Gemini" });
+                        if (looksLikeActionRequest(prompt) && !hasRealAction(text)) {
+                            lastError += "Gemini claimed action without a real EXEC block | ";
+                        } else {
+                            const { text: cleanText, browserRequest } = extractBrowserBlock(text);
+                            await upsertCache(supabase, prompt, cleanText);
+                            saveHistory(supabase, username, prompt, cleanText);
+                            return res.status(200).json({ result: cleanText, browserRequest, provider: "Gemini" });
+                        }
                     }
                 } else {
                     lastError += "Gemini Error: " + resGemini.statusText + " | ";
@@ -295,10 +347,14 @@ If a user asks where to put an API key, tell them:
                     if (data.choices?.[0]?.message) {
                         let text = data.choices[0].message.content;
                         text = normalizeProviderText(text);
-                        const { text: cleanText, browserRequest } = extractBrowserBlock(text);
-                        await upsertCache(supabase, prompt, cleanText);
-                        saveHistory(supabase, username, prompt, cleanText);
-                        return res.status(200).json({ result: cleanText, browserRequest, provider: "OpenRouter" });
+                        if (looksLikeActionRequest(prompt) && !hasRealAction(text)) {
+                            lastError += "OpenRouter claimed action without a real EXEC block | ";
+                        } else {
+                            const { text: cleanText, browserRequest } = extractBrowserBlock(text);
+                            await upsertCache(supabase, prompt, cleanText);
+                            saveHistory(supabase, username, prompt, cleanText);
+                            return res.status(200).json({ result: cleanText, browserRequest, provider: "OpenRouter" });
+                        }
                     }
                 } else {
                     lastError += "OpenRouter Error: " + orRes.statusText + " | ";
@@ -315,6 +371,13 @@ If a user asks where to put an API key, tell them:
         return res.status(200).json({
             result: `[DOOMSDAY FALLBACK ACTIVATED]\nAll external AI endpoints failed.\n\nReturning latest scraped data summary:\n\n${keys.LOCAL_SCRAPES[0].text.substring(0, 1000)}...`,
             provider: "Doomsday Local Scraper"
+        });
+    }
+
+    if (looksLikeActionRequest(prompt)) {
+        return res.status(200).json({
+            result: "I wasn't able to generate a real action for this request through any available AI provider — nothing was pushed or changed. You can try rephrasing the request, or try again in a moment.",
+            provider: "None (action generation failed)"
         });
     }
 
