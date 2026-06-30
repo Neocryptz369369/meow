@@ -1,5 +1,6 @@
 
 
+
 <!-- build:20260625-pink -->
 <!DOCTYPE html>
 <html lang="en">
@@ -1761,6 +1762,19 @@
             // real Supabase auth, so it's gone now — see the login check above,
             // which also refuses to let localStorage be used for this username.
 
+            // ── Catch a Supabase password-recovery redirect ─────────────────
+            // When someone clicks "reset my password" in an email, Supabase
+            // sends them back here with #type=recovery&access_token=... in the
+            // URL. Without this check, that link just landed on the normal
+            // homepage with no indication anything happened — this catches it
+            // and shows a real "set new password" popup instead.
+            if (window.location.hash.includes('type=recovery')) {
+                showSetNewPasswordPopup();
+                // Don't return — let the rest of init() still run underneath,
+                // since supabaseClient needs to process this same hash to
+                // establish the recovery session.
+            }
+
             // Check local storage first (Fallback)
             if (await checkGeoBlock()) return;
             let localUser = localStorage.getItem('currentUser');
@@ -2557,9 +2571,9 @@
                 }
 
                 // ── Autonomous Execution Engine v2 — Step-by-step pipeline ──
-                const execMatch = aiText.match(/<<<EXEC>>>([\s\S]*?)<<<END_EXEC>>>/);
+                const execMatch = aiText.match(/<<<EXEC>>>([\s\S]*?)<<<END_EXEC>>+/);
                 if (execMatch) {
-                    const visibleText = aiText.replace(/<<<EXEC>>>[\s\S]*?<<<END_EXEC>>>/g, '').trim();
+                    const visibleText = aiText.replace(/<<<EXEC>>>[\s\S]*?<<<END_EXEC>>+/g, '').trim();
                     if (visibleText) appendMessage('assistant', visibleText);
 
                     let actionJson;
@@ -2729,13 +2743,13 @@
                             _setStep('p2', 'done', 'Changes generated ✓');
 
                             aiText = cD.result;
-                            const eM2 = aiText.match(/<<<EXEC>>>([\s\S]*?)<<<END_EXEC>>>/);
+                            const eM2 = aiText.match(/<<<EXEC>>>([\s\S]*?)<<<END_EXEC>>+/);
                             if (!eM2) {
                                 _stopAll();
-                                appendMessage('assistant', aiText.replace(/<<<EXEC>>>[\s\S]*?<<<END_EXEC>>>/g,'').trim() || aiText);
+                                appendMessage('assistant', aiText.replace(/<<<EXEC>>>[\s\S]*?<<<END_EXEC>>+/g,'').trim() || aiText);
                             } else {
                                 let a2; try { a2 = JSON.parse(eM2[1].trim()); } catch(e) { _stopAll(); appendMessage('assistant','Parse error on continuation.'); return; }
-                                const vT2 = aiText.replace(/<<<EXEC>>>[\s\S]*?<<<END_EXEC>>>/g,'').trim();
+                                const vT2 = aiText.replace(/<<<EXEC>>>[\s\S]*?<<<END_EXEC>>+/g,'').trim();
                                 if (vT2) appendMessage('assistant', vT2);
 
                                 // Show what the AI is about to write
@@ -2750,6 +2764,13 @@
                                 }
 
                                 _step('p3', `Applying changes: ${a2.action} on ${a2.repo || ''}...`, 'active');
+                                const confirmed2 = await showPushConfirmPopup(a2);
+                                if (!confirmed2) {
+                                    _setStep('p3', 'warn', 'Cancelled — no changes were pushed.');
+                                    _stopAll();
+                                    appendMessage('assistant', 'No problem — I didn\'t push anything. Let me know if you\'d like to try a different change.');
+                                    return;
+                                }
                                 const eR2 = await fetch('/api/execute', {
                                     method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${currentToken}`},
                                     body: JSON.stringify(a2)
@@ -2776,6 +2797,14 @@
                             _step('d1', `Reading ${actionJson.path || 'file'} from GitHub...`, 'active');
                             await new Promise(r => setTimeout(r, 350)); // let user see step
                             _step('d2', `Applying ${actionJson.action}...`, 'active');
+
+                            const confirmed1 = await showPushConfirmPopup(actionJson);
+                            if (!confirmed1) {
+                                _setStep('d2', 'warn', 'Cancelled — no changes were pushed.');
+                                _stopAll();
+                                appendMessage('assistant', 'No problem — I didn\'t push anything. Let me know if you\'d like to try a different change.');
+                                return;
+                            }
 
                             const eR = await fetch('/api/execute', {
                                 method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${currentToken}`},
@@ -5809,6 +5838,77 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
         if (window._browserPermResolve) { window._browserPermResolve(allowed); window._browserPermResolve = null; }
     }
 
+    // ── Push-to-GitHub confirmation gate ───────────────────────────────────
+    // Turns a raw EXEC action JSON into a short, human-readable summary so
+    // the person approving it actually knows what they're approving —
+    // "patch index.html" rather than a wall of JSON.
+    function describeExecAction(actionJson) {
+        const a = actionJson || {};
+        const repo = a.repo || '(unknown repo)';
+        const path = a.path || '';
+        switch (a.action) {
+            case 'push_file':
+                return `Create/replace file:\n${repo}/${path}\n\n${(a.content || '').slice(0, 300)}${(a.content||'').length > 300 ? '\n…' : ''}`;
+            case 'patch_file':
+                return `Patch file:\n${repo}/${path}\n\nFind:\n${(a.find || '').slice(0, 150)}\n\nReplace with:\n${(a.replace || '').slice(0, 150)}`;
+            case 'inject_html':
+                return `Add HTML to:\n${repo}/${path}\n(position: ${a.position || 'before_closing_body'})\n\n${(a.inject || a.html_to_inject || '').slice(0, 300)}`;
+            case 'read_file_excerpt':
+            case 'list_repos':
+                return `Read-only action: ${a.action}\n${repo}${path ? '/' + path : ''}`;
+            default:
+                return `Action: ${a.action || '(unknown)'}\n${repo}${path ? '/' + path : ''}`;
+        }
+    }
+
+    function showPushConfirmPopup(actionJson) {
+        return new Promise(resolve => {
+            document.getElementById('push-confirm-desc').textContent = describeExecAction(actionJson);
+            document.getElementById('push-confirm-popup').style.display = 'flex';
+            window._pushConfirmResolve = resolve;
+        });
+    }
+    function handlePushConfirmResponse(allowed) {
+        document.getElementById('push-confirm-popup').style.display = 'none';
+        if (window._pushConfirmResolve) { window._pushConfirmResolve(allowed); window._pushConfirmResolve = null; }
+    }
+
+    // ── Password recovery — set a new password from a Supabase reset link ──
+    function showSetNewPasswordPopup() {
+        document.getElementById('set-new-password-popup').style.display = 'flex';
+    }
+
+    async function submitNewPasswordFromRecovery() {
+        const next = document.getElementById('recovery-new-pass').value;
+        const conf = document.getElementById('recovery-confirm-pass').value;
+        const statusEl = document.getElementById('recovery-pass-status');
+        function show(text, color) { statusEl.style.color = color; statusEl.textContent = text; }
+
+        if (!next || !conf) return show('Please fill in both fields.', '#ffaa00');
+        if (next.length < 8) return show('Must be at least 8 characters.', '#ffaa00');
+        if (next !== conf) return show('Passwords do not match.', '#ffaa00');
+
+        show('Saving…', '#888');
+        try {
+            // supabaseClient automatically picked up the recovery token from the
+            // URL hash on page load — this just needs to call updateUser, no
+            // separate "verify the old password" step, since the email link
+            // itself was the verification.
+            const { error } = await supabaseClient.auth.updateUser({ password: next });
+            if (error) return show(error.message || 'Could not update password.', '#ff4444');
+
+            show('✔ Password set! Reloading…', '#00ff88');
+            // Clean the recovery hash out of the URL so refreshing doesn't
+            // re-trigger this popup, then reload into a normal logged-in state.
+            setTimeout(() => {
+                window.location.hash = '';
+                window.location.reload();
+            }, 1200);
+        } catch (e) {
+            show('Could not reach the server — please try again.', '#ff4444');
+        }
+    }
+
     async function _openLiveBrowser() {
         const urlInput = document.getElementById('live-browser-url');
         const taskInput = document.getElementById('live-browser-task');
@@ -6317,6 +6417,38 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             <button class="btn" style="border-color:#a855f7; color:#a855f7; padding:10px 30px; font-size:0.95em; font-weight:bold;" onclick="handleBrowserPermResponse(true)">✅ ALLOW</button>
             <button class="btn" style="border-color:#555; color:#666; padding:10px 30px; font-size:0.95em;" onclick="handleBrowserPermResponse(false)">DENY</button>
         </div>
+    </div>
+</div>
+
+<!-- ── Push-to-GitHub Confirmation Popup ─────────────────────────────────── -->
+<!-- Every real write to GitHub (and therefore every live-site deploy) stops
+     here first. Nothing in the EXEC pipeline calls /api/execute without the
+     user clicking CONFIRM PUSH on this popup. -->
+<div id="push-confirm-popup" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9600; align-items:center; justify-content:center;">
+    <div style="background:#0a0a0a; border:2px solid #00ffc8; border-radius:14px; padding:30px 34px; max-width:520px; width:92%; text-align:center; box-shadow:0 0 70px rgba(0,255,200,0.35);">
+        <div style="font-size:2.4em; margin-bottom:12px;">📤</div>
+        <h3 style="color:#00ffc8; margin:0 0 12px; letter-spacing:1px; font-size:1.1em;">CONFIRM PUSH TO GITHUB</h3>
+        <p style="color:#aaa; font-size:0.86em; margin:0 0 8px;">Neocryptz AI wants to make this change, live on your site:</p>
+        <div id="push-confirm-desc" style="color:#fff; font-size:0.88em; text-align:left; margin:0 0 14px; padding:10px 14px; background:#001410; border:1px solid #00ffc844; border-radius:8px; max-height:160px; overflow-y:auto; white-space:pre-wrap; word-break:break-word;"></div>
+        <p style="color:#555; font-size:0.77em; margin-bottom:22px;">This pushes a real commit and Vercel will redeploy automatically. <strong style="color:#00ffc8;">Nothing happens until you confirm.</strong></p>
+        <div style="display:flex; gap:12px; justify-content:center;">
+            <button class="btn" style="border-color:#00ffc8; color:#00ffc8; padding:10px 26px; font-size:0.95em; font-weight:bold;" onclick="handlePushConfirmResponse(true)">✅ CONFIRM PUSH</button>
+            <button class="btn" style="border-color:#555; color:#666; padding:10px 26px; font-size:0.95em;" onclick="handlePushConfirmResponse(false)">CANCEL</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Set New Password Popup (from a Supabase password-recovery link) ──── -->
+<div id="set-new-password-popup" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:9700; align-items:center; justify-content:center;">
+    <div style="background:#0a0a0a; border:2px solid var(--secondary); border-radius:14px; padding:30px 34px; max-width:420px; width:92%; text-align:center; box-shadow:0 0 70px rgba(0,255,255,0.3);">
+        <div style="font-size:2.4em; margin-bottom:12px;">🔑</div>
+        <h3 style="color:var(--secondary); margin:0 0 16px; letter-spacing:1px; font-size:1.1em;">SET A NEW PASSWORD</h3>
+        <div style="display:flex; flex-direction:column; gap:10px; text-align:left;">
+            <input type="password" id="recovery-new-pass" placeholder="New password (min 8 characters)" autocomplete="new-password" style="padding:10px; background:#111; border:1px solid var(--secondary); color:#fff; border-radius:6px;">
+            <input type="password" id="recovery-confirm-pass" placeholder="Confirm new password" autocomplete="new-password" style="padding:10px; background:#111; border:1px solid var(--secondary); color:#fff; border-radius:6px;" onkeydown="if(event.key==='Enter') submitNewPasswordFromRecovery()">
+            <p id="recovery-pass-status" style="font-size:0.8em; min-height:18px; margin:2px 0 0;"></p>
+        </div>
+        <button class="btn" style="border-color:var(--secondary); color:var(--secondary); padding:10px 28px; font-size:0.95em; font-weight:bold; margin-top:14px;" onclick="submitNewPasswordFromRecovery()">SET PASSWORD</button>
     </div>
 </div>
 
