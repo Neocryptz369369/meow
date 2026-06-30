@@ -27,6 +27,21 @@ module.exports = async function handler(req, res) {
     const { prompt, keys, history, username } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
 
+    // Manners shouldn't depend on which AI provider happens to be working
+    // tonight. A plain "thank you" gets an instant, guaranteed reply here —
+    // no AI call, no chance of a confused refusal, no delay.
+    const gratitudeMatch = prompt.trim().toLowerCase().match(/^(thank(s| you)?( so much| a lot| very much)?|thx|ty|appreciate it|much appreciated)[\s!.,]*$/);
+    if (gratitudeMatch) {
+        const replies = [
+            "You're welcome!",
+            "You're very welcome — happy to help.",
+            "Anytime!",
+            "You're welcome! Let me know if you need anything else."
+        ];
+        const reply = replies[Math.floor(Math.random() * replies.length)];
+        return res.status(200).json({ result: reply, provider: "Instant (no AI call needed)" });
+    }
+
     async function upsertCache(supabase, promptText, responseText) {
         if (!supabase) return;
         try {
@@ -122,7 +137,15 @@ If a user asks where to put an API key, tell them:
 2. Click SETTINGS / OAUTH
 3. Scroll to MY SECRET KEYS VAULT
 4. Enter a label and paste the key
-5. Click SAVE`;
+5. Click SAVE
+
+CONVERSATIONAL MESSAGES:
+Not every message is a task. If the user sends something short and
+conversational — "thank you", "thanks", "ok", "cool", "nice", a greeting, or
+similar — just respond naturally and warmly, like a normal reply in
+conversation. Do not treat it as a request that needs an action, and do not
+say you "can't help with that" — there's nothing being asked that needs
+help; a simple acknowledgment is enough.`;
 
     if (keys && keys.ACTIVE_PERSONA) {
         if (keys.ACTIVE_PERSONA === 'seo') systemPrompt = "You are Neocryptz AI. You are a highly-paid SEO Keyword expert. You provide ultra-short, highly-optimized keywords and SEO metadata.";
