@@ -5962,11 +5962,15 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             document.head.appendChild(st);
         }
 
-        // ── Build full browser-chrome panel ──────────────────────────────
+        // ── Build full browser-chrome panel — now a fullscreen overlay, not
+        // an inline chat element, since cramming a live browser view into a
+        // chat-width column was never going to look right ──────────────────
         const wrap = document.createElement('div');
         wrap.id = wid;
-        wrap.style.cssText = 'border:2px solid #a855f7;border-radius:12px;overflow:hidden;margin:10px 0;background:#070010;animation:_glowPulse 2s ease-in-out infinite;font-family:monospace;width:100%;max-width:1100px;align-self:center;';
+        wrap.style.cssText = 'position:fixed;inset:0;z-index:9800;border:2px solid #a855f7;border-radius:0;overflow:hidden;background:#070010;animation:_glowPulse 2s ease-in-out infinite;font-family:monospace;display:flex;flex-direction:column;';
         wrap.innerHTML =
+            // Close button — only thing that needs to be new for fullscreen mode
+            '<div onclick="document.getElementById(\'' + wid + '\').remove(); document.body.style.overflow = \'\';" style="position:absolute;top:10px;right:14px;z-index:50;color:#fff;background:rgba(168,85,247,0.25);border:1px solid #a855f7;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.1em;">✕</div>' +
             // Title bar
             '<div style="background:linear-gradient(90deg,#120020,#1a0030);padding:8px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #a855f744;">' +
                 '<div style="display:flex;gap:5px;">' +
@@ -5983,7 +5987,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             // Progress bar
             '<div style="height:2px;background:#1a0030;" id="' + wid + '-progwrap"><div id="' + wid + '-prog" style="height:100%;background:linear-gradient(90deg,#a855f7,#ff4444);width:0%;transition:width 0.5s ease;"></div></div>' +
             // Viewport
-            '<div id="' + wid + '-viewport" style="position:relative;min-height:560px;max-height:80vh;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
+            '<div id="' + wid + '-viewport" style="position:relative;flex:1;min-height:0;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
                 // Scanline overlay
                 '<div style="position:absolute;inset:0;z-index:10;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(168,85,247,0.025) 2px,rgba(168,85,247,0.025) 4px);"></div>' +
                 // Loading spinner
@@ -6008,11 +6012,11 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
                 '<div onclick="document.getElementById(\'' + wid + '-checklist\').style.display = document.getElementById(\'' + wid + '-checklist\').style.display===\'none\'?\'block\':\'none\';" style="padding:6px 14px;color:#a855f7;font-size:0.68em;letter-spacing:0.5px;cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none;">' +
                     '<span>▾</span><span>STEPS</span>' +
                 '</div>' +
-                '<div id="' + wid + '-checklist" style="padding:0 14px 10px;display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto;"></div>' +
+                '<div id="' + wid + '-checklist" style="padding:0 14px 10px;display:flex;flex-direction:column;gap:5px;max-height:28vh;overflow-y:auto;font-size:0.92em;"></div>' +
             '</div>';
 
-        chat.appendChild(wrap);
-        chat.scrollTop = chat.scrollHeight;
+        document.body.appendChild(wrap);
+        document.body.style.overflow = 'hidden';
 
         const vp       = document.getElementById(wid + '-viewport');
         const spinner  = document.getElementById(wid + '-spinner');
@@ -6063,7 +6067,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             if (checklistEl) {
                 checklistEl.innerHTML = d.frames.map((f, idx) => {
                     const shortLbl = (f.label || ('Step ' + (idx+1))).replace(/^[\u2705\u26a0\ufe0f\u274c\u2139\ufe0f\s]+/, '');
-                    return '<div id="' + wid + '-cl' + idx + '" style="display:flex;align-items:center;gap:8px;font-size:0.74em;color:#555;transition:color 0.3s;">' +
+                    return '<div id="' + wid + '-cl' + idx + '" style="display:flex;align-items:center;gap:9px;font-size:0.95em;color:#555;transition:color 0.3s;">' +
                         '<span id="' + wid + '-clmark' + idx + '" style="width:14px;text-align:center;flex-shrink:0;">○</span>' +
                         '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(shortLbl.slice(0,90)) + '</span>' +
                     '</div>';
@@ -6092,7 +6096,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
                 vp.innerHTML =
                     '<img src="data:image/jpeg;base64,' + frame.image + '" ' +
                         'id="' + wid + '-img' + idx + '" ' +
-                        'style="width:100%;display:block;max-height:80vh;object-fit:contain;background:#000;animation:_frameFadeIn 0.25s ease;" />' +
+                        'style="width:100%;height:100%;display:block;object-fit:contain;background:#000;animation:_frameFadeIn 0.25s ease;" />' +
                     // Scanline overlay (stays on top)
                     '<div style="position:absolute;inset:0;z-index:10;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(168,85,247,0.025) 2px,rgba(168,85,247,0.025) 4px);"></div>' +
                     // Cursor container
