@@ -1117,17 +1117,8 @@
                 <button id="mic-btn" onclick="toggleVoiceInput()" style="background: none; border: none; font-size: 1.5em; cursor: pointer; color: var(--primary);">🎤</button>
                 <button id="send-btn" onclick="sendMessage()">EXECUTE</button>
             </div>
-            <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-                <button class="btn neon-border" onclick="document.getElementById('smart-paste-modal').style.display='flex'" title="Smart Paste Cleaner">📋 Clean Paste</button>
-                <button class="btn neon-border" onclick="document.getElementById('polisher-modal').style.display='flex'" title="Grammar Polisher">✍️ Polish Text</button>
-                <button class="btn neon-border" onclick="document.getElementById('canvas-modal').style.display='flex'" title="Prompt Canvas">📝 Blueprint Canvas</button>
-                <button class="btn neon-border" onclick="requestSplitView()" title="A/B Split Generator">⚖️ Split View A/B</button>
-                <button class="btn neon-border" onclick="downloadChat()" title="Download History">💾 Export Chat</button>
-                <button id="screen-share-btn" class="btn neon-border" onclick="startScreenShare()" title="Share your screen live with admin" style="border-color:#a855f7;color:#a855f7;">🖥️ Share Screen</button>
-                <button class="btn neon-border" onclick="document.getElementById('live-browser-modal').style.display='flex'" title="Open a live browser — watch AI navigate in real time" style="border-color:#ff4444;color:#ff4444;font-weight:bold;">🔴 GO LIVE</button>
-                <button class="btn neon-border" onclick="document.getElementById('features-modal').style.display='flex'" style="background:linear-gradient(90deg,#00ffff22,#0088ff22);border-color:#00ffff;color:#00ffff;font-weight:bold;" title="See all features">⚡ FEATURES</button>
-            <button id="watch-ad-btn" class="btn neon-border" onclick="watchAdForCredits()" title="Wait 20 seconds to earn 5 free questions" style="border-color:#00ff88;color:#00ff88;font-weight:bold;">📺 Free Credits (+5 Q)</button>
-            </div>
+            <!-- Tools moved to the gear-icon menu (⚙️) to keep this area clear for the chat/browser view -->
+
             <!-- Sharing active banner -->
             <div id="screen-share-banner" style="display:none;align-items:center;justify-content:center;gap:12px;background:rgba(255,0,0,0.12);border:1px solid #ff4444;border-radius:6px;padding:6px 14px;font-size:0.82em;color:#ff4444;">
                 <span style="animation:badgePulse 0.6s infinite alternate;display:inline-block;">🔴</span>
@@ -1201,6 +1192,21 @@
                     <button class="btn" style="font-size:0.7em;" onclick="useTemplate('Summarize the top tech headline of the morning about [TOPIC]')">Daily Briefing</button>
                 </div>
             </div><div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+            <!-- Tools — moved here from the main chat view to keep that area clear -->
+            <div style="border-top:1px solid #333; padding-top:14px; margin-bottom:4px;">
+                <label style="color: var(--secondary); font-size: 0.8em; display:block; margin-bottom: 8px;">TOOLS</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button class="btn neon-border" style="font-size:0.78em;" onclick="closeModal('user-menu-modal'); document.getElementById('smart-paste-modal').style.display='flex'" title="Smart Paste Cleaner">📋 Clean Paste</button>
+                    <button class="btn neon-border" style="font-size:0.78em;" onclick="closeModal('user-menu-modal'); document.getElementById('polisher-modal').style.display='flex'" title="Grammar Polisher">✍️ Polish Text</button>
+                    <button class="btn neon-border" style="font-size:0.78em;" onclick="closeModal('user-menu-modal'); document.getElementById('canvas-modal').style.display='flex'" title="Prompt Canvas">📝 Blueprint Canvas</button>
+                    <button class="btn neon-border" style="font-size:0.78em;" onclick="closeModal('user-menu-modal'); requestSplitView()" title="A/B Split Generator">⚖️ Split View A/B</button>
+                    <button class="btn neon-border" style="font-size:0.78em;" onclick="closeModal('user-menu-modal'); downloadChat()" title="Download History">💾 Export Chat</button>
+                    <button id="screen-share-btn" class="btn neon-border" style="font-size:0.78em;border-color:#a855f7;color:#a855f7;" onclick="closeModal('user-menu-modal'); startScreenShare()" title="Share your screen live with admin">🖥️ Share Screen</button>
+                    <button class="btn neon-border" style="font-size:0.78em;border-color:#ff4444;color:#ff4444;font-weight:bold;" onclick="closeModal('user-menu-modal'); document.getElementById('live-browser-modal').style.display='flex'" title="Open a live browser — watch AI navigate in real time">🔴 GO LIVE</button>
+                    <button class="btn neon-border" style="font-size:0.78em;background:linear-gradient(90deg,#00ffff22,#0088ff22);border-color:#00ffff;color:#00ffff;font-weight:bold;" onclick="closeModal('user-menu-modal'); document.getElementById('features-modal').style.display='flex'" title="See all features">⚡ FEATURES</button>
+                    <button id="watch-ad-btn" class="btn neon-border" style="font-size:0.78em;border-color:#00ff88;color:#00ff88;font-weight:bold;" onclick="closeModal('user-menu-modal'); watchAdForCredits()" title="Wait 20 seconds to earn 5 free questions">📺 Free Credits (+5 Q)</button>
+                </div>
+            </div>
             <button class="btn neon-border" style="border-color:#00ff88; color:#00ff88;" onclick="closeModal('user-menu-modal'); watchAdForCredits()">📺 EARN CREDITS (WATCH AD)</button>
                 <button id="user-support-nav-btn" class="btn" style="border-color:#8a2be2; color:#8a2be2; position:relative;" onclick="closeModal('user-menu-modal'); openModal('settings-modal'); clearSupportBadge()">💬 SUPPORT CHAT <span id="support-nav-badge" style="display:none; position:absolute; top:-6px; right:-6px; background:#ff0000; color:#fff; border-radius:50%; width:18px; height:18px; font-size:11px; font-weight:bold; line-height:18px; text-align:center; animation:badgePulse 0.6s infinite alternate;">!</span></button>
                 <button class="btn" onclick="closeModal('user-menu-modal'); openModal('share-modal')">SHARE NEOCRYPTZ</button>
@@ -5977,7 +5983,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             // Progress bar
             '<div style="height:2px;background:#1a0030;" id="' + wid + '-progwrap"><div id="' + wid + '-prog" style="height:100%;background:linear-gradient(90deg,#a855f7,#ff4444);width:0%;transition:width 0.5s ease;"></div></div>' +
             // Viewport
-            '<div id="' + wid + '-viewport" style="position:relative;min-height:520px;max-height:70vh;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
+            '<div id="' + wid + '-viewport" style="position:relative;min-height:560px;max-height:80vh;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
                 // Scanline overlay
                 '<div style="position:absolute;inset:0;z-index:10;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(168,85,247,0.025) 2px,rgba(168,85,247,0.025) 4px);"></div>' +
                 // Loading spinner
@@ -6086,7 +6092,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
                 vp.innerHTML =
                     '<img src="data:image/jpeg;base64,' + frame.image + '" ' +
                         'id="' + wid + '-img' + idx + '" ' +
-                        'style="width:100%;display:block;max-height:70vh;object-fit:contain;background:#000;animation:_frameFadeIn 0.25s ease;" />' +
+                        'style="width:100%;display:block;max-height:80vh;object-fit:contain;background:#000;animation:_frameFadeIn 0.25s ease;" />' +
                     // Scanline overlay (stays on top)
                     '<div style="position:absolute;inset:0;z-index:10;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(168,85,247,0.025) 2px,rgba(168,85,247,0.025) 4px);"></div>' +
                     // Cursor container
