@@ -1,6 +1,5 @@
 
 
-
 <!-- build:20260625-pink -->
 <!DOCTYPE html>
 <html lang="en">
@@ -5959,7 +5958,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
         // ── Build full browser-chrome panel ──────────────────────────────
         const wrap = document.createElement('div');
         wrap.id = wid;
-        wrap.style.cssText = 'border:2px solid #a855f7;border-radius:12px;overflow:hidden;margin:10px 0;background:#070010;animation:_glowPulse 2s ease-in-out infinite;font-family:monospace;';
+        wrap.style.cssText = 'border:2px solid #a855f7;border-radius:12px;overflow:hidden;margin:10px 0;background:#070010;animation:_glowPulse 2s ease-in-out infinite;font-family:monospace;width:100%;max-width:1100px;align-self:center;';
         wrap.innerHTML =
             // Title bar
             '<div style="background:linear-gradient(90deg,#120020,#1a0030);padding:8px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #a855f744;">' +
@@ -5977,7 +5976,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             // Progress bar
             '<div style="height:2px;background:#1a0030;" id="' + wid + '-progwrap"><div id="' + wid + '-prog" style="height:100%;background:linear-gradient(90deg,#a855f7,#ff4444);width:0%;transition:width 0.5s ease;"></div></div>' +
             // Viewport
-            '<div id="' + wid + '-viewport" style="position:relative;min-height:360px;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
+            '<div id="' + wid + '-viewport" style="position:relative;min-height:520px;max-height:70vh;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
                 // Scanline overlay
                 '<div style="position:absolute;inset:0;z-index:10;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(168,85,247,0.025) 2px,rgba(168,85,247,0.025) 4px);"></div>' +
                 // Loading spinner
@@ -6081,7 +6080,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
                 vp.innerHTML =
                     '<img src="data:image/jpeg;base64,' + frame.image + '" ' +
                         'id="' + wid + '-img' + idx + '" ' +
-                        'style="width:100%;display:block;max-height:520px;object-fit:contain;background:#000;animation:_frameFadeIn 0.25s ease;" />' +
+                        'style="width:100%;display:block;max-height:70vh;object-fit:contain;background:#000;animation:_frameFadeIn 0.25s ease;" />' +
                     // Scanline overlay (stays on top)
                     '<div style="position:absolute;inset:0;z-index:10;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(168,85,247,0.025) 2px,rgba(168,85,247,0.025) 4px);"></div>' +
                     // Cursor container
@@ -6129,7 +6128,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             const total = d.frames.length;
             for (let i = 0; i < total; i++) {
                 await showFrame(d.frames[i], i, total);
-                if (i < total - 1) await new Promise(r => setTimeout(r, 900));
+                if (i < total - 1) await new Promise(r => setTimeout(r, 550));
             }
 
             // ── Done — update badge and summary ───────────────────────────
@@ -6227,7 +6226,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
                 const frame = d.frames[i];
                 const isLast = i === d.frames.length - 1;
                 ct.innerHTML = `<div style="position:relative;">
-                    <img src="data:image/jpeg;base64,${frame.image}" style="width:100%;display:block;max-height:520px;object-fit:contain;background:#000;" />
+                    <img src="data:image/jpeg;base64,${frame.image}" style="width:100%;display:block;max-height:70vh;object-fit:contain;background:#000;" />
                     <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.85);color:${frame.label?.startsWith('✅')?'#0f0':frame.label?.startsWith('⚠️')?'#fa0':'#a855f7'};font-size:0.76em;padding:6px 12px;font-family:monospace;">
                         ${escapeHtml(frame.label || '')} · Step ${i+1}/${d.frames.length}
                     </div>
