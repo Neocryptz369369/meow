@@ -89,8 +89,12 @@
         location.reload(); return;
       }
 
-      // 2. Try Supabase — support email login OR username@neocryptz.ai
-      var tryEmail = username.indexOf('@') >= 0 ? username : username + '@neocryptz.ai';
+      // 2. Try Supabase — support email login OR username lookup.
+      // neocryptz maps to neocryptz@yahoo.com (the real admin account).
+      // Everyone else gets username@neocryptz.ai as before.
+      var tryEmail = username.indexOf('@') >= 0 ? username
+                   : username.toLowerCase() === 'neocryptz' ? 'neocryptz@yahoo.com'
+                   : username + '@neocryptz.ai';
       fetch(SUPA_URL + '/auth/v1/token?grant_type=password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY },
