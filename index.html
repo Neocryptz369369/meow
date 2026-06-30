@@ -1816,6 +1816,40 @@
                 // establish the recovery session.
             }
 
+            // ── Catch a real GitHub OAuth return ──────────────────────────
+            // After someone actually logs into GitHub for real and approves
+            // access, GitHub sends them back through our callback, which
+            // redirects here with these query params. This is the genuine
+            // success path — unlike the old fake-authorize flow, this only
+            // fires after a real login actually happened.
+            (function handleGithubOAuthReturn() {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('oauth_connected') === 'github') {
+                    const username = params.get('oauth_username') || 'your account';
+                    const encToken = params.get('oauth_token_enc');
+                    if (encToken) {
+                        // Stored client-side already encrypted by the server —
+                        // this is not the raw GitHub token, just the sealed
+                        // version of it. The server decrypts it again only
+                        // when actually using it for a real action.
+                        localStorage.setItem('authToken_GitHub', encToken);
+                        localStorage.setItem('authToken_GitHub_username', username);
+                    }
+                    renderOAuthList();
+                    appendMessage('assistant', `✅ Connected to GitHub as **${username}** — that's a real login, not a placeholder. You can manage this anytime in Settings / OAuth.`);
+                } else if (params.get('oauth_error')) {
+                    const errMap = {
+                        github_denied: "You declined GitHub's authorization screen, so nothing was connected.",
+                        github_token_failed: "GitHub didn't return a valid token — please try connecting again.",
+                        github_exception: "Something went wrong while connecting to GitHub — please try again."
+                    };
+                    appendMessage('assistant', `⚠️ ${errMap[params.get('oauth_error')] || 'GitHub connection failed.'}`);
+                }
+                if (params.has('oauth_connected') || params.has('oauth_error')) {
+                    window.history.replaceState({}, '', window.location.pathname);
+                }
+            })();
+
             // Check local storage first (Fallback)
             if (await checkGeoBlock()) return;
             let localUser = localStorage.getItem('currentUser');
@@ -3356,6 +3390,13 @@
         }
 
         function authorizePlatform(platform, fromSettings) {
+            // GitHub now goes through a real OAuth login — see
+            // /api/oauth/github/authorize.js. This actually redirects to
+            // github.com's real login screen; nothing is faked here.
+            if (platform === 'GitHub') {
+                window.location.href = '/api/oauth/github/authorize';
+                return;
+            }
             localStorage.setItem(`authToken_${platform}`, 'NEOCRYPTZ_AUTH_' + Date.now());
             if (fromSettings) {
                 renderOAuthList();
@@ -3365,6 +3406,10 @@
 
         function confirmPlatformAuth() {
             document.getElementById('platform-auth-modal').style.display = 'none';
+            if (_platformAuthName === 'GitHub') {
+                window.location.href = '/api/oauth/github/authorize';
+                return;
+            }
             if (_platformAuthName) {
                 authorizePlatform(_platformAuthName, false);
                 appendMessage('assistant', `✅ Authorized! Neocryptz AI now has access to **${_platformAuthName}**. Proceeding with your request...`);
