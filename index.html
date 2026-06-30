@@ -1267,8 +1267,9 @@
             <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
                 
                 <div style="margin-bottom: 20px; padding: 10px; border: 1px dashed var(--secondary); text-align: left;">
-                    <label style="color: var(--secondary); font-size: 0.8em; display:block;">YOUR REFERRAL LINK (Earn 25 Credits)</label>
-                    <input type="text" id="referral-link" readonly style="width:100%; padding:5px; background:#222; border:none; color:#fff; margin-top:5px; font-size:0.8em;">
+                    <label style="color: var(--secondary); font-size: 0.8em; display:block;">YOUR REFERRAL LINK (Earn 25 Credits per sign-up)</label>
+                    <p style="font-size: 0.72em; color: #aaa; margin: 4px 0 0;">Limited to once every 5 hours — additional sign-ups within that window won't earn extra credits.</p>
+                    <input type="text" id="referral-link" readonly style="width:100%; padding:5px; background:#222; border:none; color:#fff; margin-top:8px; font-size:0.8em;">
                     <button class="btn" style="width:100%; margin-top:5px; font-size:0.7em;" onclick="copyReferral()">COPY REFERRAL LINK</button>
                 </div>
                 <button class="btn" onclick="shareTo('copy')">📋 COPY SHARE TEXT</button>
@@ -3821,7 +3822,7 @@
             if(!copyText.value) return;
             copyText.select();
             document.execCommand('copy');
-            alert('Referral Link Copied! Send it to your friends to earn 10% commission on sign-ups.');
+            alert('Referral Link Copied! Share it and earn 25 extra credits when someone signs up — limited to once every 5 hours.');
         }
 
         
