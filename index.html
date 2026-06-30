@@ -1117,16 +1117,21 @@
                 <button id="mic-btn" onclick="toggleVoiceInput()" style="background: none; border: none; font-size: 1.5em; cursor: pointer; color: var(--primary);">🎤</button>
                 <button id="send-btn" onclick="sendMessage()">EXECUTE</button>
             </div>
-            <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-                <button class="btn neon-border" onclick="document.getElementById('smart-paste-modal').style.display='flex'" title="Smart Paste Cleaner">📋 Clean Paste</button>
-                <button class="btn neon-border" onclick="document.getElementById('polisher-modal').style.display='flex'" title="Grammar Polisher">✍️ Polish Text</button>
-                <button class="btn neon-border" onclick="document.getElementById('canvas-modal').style.display='flex'" title="Prompt Canvas">📝 Blueprint Canvas</button>
-                <button class="btn neon-border" onclick="requestSplitView()" title="A/B Split Generator">⚖️ Split View A/B</button>
-                <button class="btn neon-border" onclick="downloadChat()" title="Download History">💾 Export Chat</button>
-                <button id="screen-share-btn" class="btn neon-border" onclick="startScreenShare()" title="Share your screen live with admin" style="border-color:#a855f7;color:#a855f7;">🖥️ Share Screen</button>
-                <button class="btn neon-border" onclick="document.getElementById('live-browser-modal').style.display='flex'" title="Open a live browser — watch AI navigate in real time" style="border-color:#ff4444;color:#ff4444;font-weight:bold;">🔴 GO LIVE</button>
-                <button class="btn neon-border" onclick="document.getElementById('features-modal').style.display='flex'" style="background:linear-gradient(90deg,#00ffff22,#0088ff22);border-color:#00ffff;color:#00ffff;font-weight:bold;" title="See all features">⚡ FEATURES</button>
-            <button id="watch-ad-btn" class="btn neon-border" onclick="watchAdForCredits()" title="Wait 20 seconds to earn 5 free questions" style="border-color:#00ff88;color:#00ff88;font-weight:bold;">📺 Free Credits (+5 Q)</button>
+            <div style="display: flex; justify-content: center; position: relative;">
+                <button id="tools-toggle-btn" class="btn neon-border" onclick="toggleToolsPopup()" style="border-color:#00ff88;color:#00ff88;font-weight:bold;">🛠️ TOOLS</button>
+                <div id="tools-popup" style="display:none; position:absolute; bottom:100%; left:50%; transform:translateX(-50%); margin-bottom:10px; background:#0a0a1a; border:2px solid #00ff88; border-radius:10px; padding:14px; box-shadow:0 0 24px rgba(0,255,136,0.25); z-index:200; width:max-content; max-width:90vw;">
+                    <div style="display: grid; grid-template-columns: repeat(2, minmax(140px, 1fr)); gap: 8px;">
+                        <button class="btn neon-border" style="font-size:0.78em;" onclick="toggleToolsPopup(); document.getElementById('smart-paste-modal').style.display='flex'" title="Smart Paste Cleaner">📋 Clean Paste</button>
+                        <button class="btn neon-border" style="font-size:0.78em;" onclick="toggleToolsPopup(); document.getElementById('polisher-modal').style.display='flex'" title="Grammar Polisher">✍️ Polish Text</button>
+                        <button class="btn neon-border" style="font-size:0.78em;" onclick="toggleToolsPopup(); document.getElementById('canvas-modal').style.display='flex'" title="Prompt Canvas">📝 Blueprint Canvas</button>
+                        <button class="btn neon-border" style="font-size:0.78em;" onclick="toggleToolsPopup(); requestSplitView()" title="A/B Split Generator">⚖️ Split View A/B</button>
+                        <button class="btn neon-border" style="font-size:0.78em;" onclick="toggleToolsPopup(); downloadChat()" title="Download History">💾 Export Chat</button>
+                        <button id="screen-share-btn" class="btn neon-border" style="font-size:0.78em;border-color:#a855f7;color:#a855f7;" onclick="toggleToolsPopup(); startScreenShare()" title="Share your screen live with admin">🖥️ Share Screen</button>
+                        <button class="btn neon-border" style="font-size:0.78em;border-color:#ff4444;color:#ff4444;font-weight:bold;" onclick="toggleToolsPopup(); document.getElementById('live-browser-modal').style.display='flex'" title="Open a live browser — watch AI navigate in real time">🔴 GO LIVE</button>
+                        <button class="btn neon-border" style="font-size:0.78em;background:linear-gradient(90deg,#00ffff22,#0088ff22);border-color:#00ffff;color:#00ffff;font-weight:bold;" onclick="toggleToolsPopup(); document.getElementById('features-modal').style.display='flex'" title="See all features">⚡ FEATURES</button>
+                        <button id="watch-ad-btn" class="btn neon-border" style="font-size:0.78em;border-color:#00ff88;color:#00ff88;font-weight:bold;" onclick="toggleToolsPopup(); watchAdForCredits()" title="Wait 20 seconds to earn 5 free questions">📺 Free Credits (+5 Q)</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Sharing active banner -->
@@ -2266,6 +2271,28 @@
         });
 
         let recognition;
+        // Tools popup — opens above the single TOOLS button instead of
+        // showing every tool as its own row, so the chat input stays close
+        // to the top and the browser overlay has more room to work with.
+        function toggleToolsPopup() {
+            const popup = document.getElementById('tools-popup');
+            if (!popup) return;
+            const opening = popup.style.display === 'none' || !popup.style.display;
+            popup.style.display = opening ? 'block' : 'none';
+            if (opening) {
+                // Close it if the user clicks anywhere outside the popup/button
+                setTimeout(() => {
+                    document.addEventListener('click', function closeToolsPopup(e) {
+                        const btn = document.getElementById('tools-toggle-btn');
+                        if (!popup.contains(e.target) && e.target !== btn) {
+                            popup.style.display = 'none';
+                            document.removeEventListener('click', closeToolsPopup);
+                        }
+                    });
+                }, 0);
+            }
+        }
+
         function toggleVoiceInput() {
             const micBtn = document.getElementById('mic-btn');
             const input  = document.getElementById('message-input');
