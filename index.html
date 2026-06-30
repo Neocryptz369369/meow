@@ -732,7 +732,7 @@
         body { font-family: 'Courier New', Courier, monospace; background: url('crypt.png'); background-size: cover; background-position: center; background-attachment: fixed; color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         #sidebar { width: 250px; border-right: 1px solid var(--primary); display: flex; flex-direction: column; padding: 20px; box-shadow: 2px 0 10px rgba(255, 0, 255, 0.2); }
         #main-content { flex: 1; display: flex; flex-direction: column; justify-content: space-between; position: relative; align-items: center; overflow: hidden; }
-        #chat-window { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }
+        #chat-window { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; position: relative; }
         .message { margin-bottom: 15px; padding: 10px; border: 1px solid #333; width: 100%; max-width: 800px; align-self: center; box-sizing: border-box; }
         .user { border-color: var(--primary); box-shadow: 0 0 5px rgba(255, 0, 255, 0.3); }
         .assistant { border-color: var(--secondary); box-shadow: 0 0 5px rgba(0, 255, 255, 0.3); }
@@ -1117,7 +1117,17 @@
                 <button id="mic-btn" onclick="toggleVoiceInput()" style="background: none; border: none; font-size: 1.5em; cursor: pointer; color: var(--primary);">🎤</button>
                 <button id="send-btn" onclick="sendMessage()">EXECUTE</button>
             </div>
-            <!-- Tools moved to the gear-icon menu (⚙️) to keep this area clear for the chat/browser view -->
+            <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                <button class="btn neon-border" onclick="document.getElementById('smart-paste-modal').style.display='flex'" title="Smart Paste Cleaner">📋 Clean Paste</button>
+                <button class="btn neon-border" onclick="document.getElementById('polisher-modal').style.display='flex'" title="Grammar Polisher">✍️ Polish Text</button>
+                <button class="btn neon-border" onclick="document.getElementById('canvas-modal').style.display='flex'" title="Prompt Canvas">📝 Blueprint Canvas</button>
+                <button class="btn neon-border" onclick="requestSplitView()" title="A/B Split Generator">⚖️ Split View A/B</button>
+                <button class="btn neon-border" onclick="downloadChat()" title="Download History">💾 Export Chat</button>
+                <button id="screen-share-btn" class="btn neon-border" onclick="startScreenShare()" title="Share your screen live with admin" style="border-color:#a855f7;color:#a855f7;">🖥️ Share Screen</button>
+                <button class="btn neon-border" onclick="document.getElementById('live-browser-modal').style.display='flex'" title="Open a live browser — watch AI navigate in real time" style="border-color:#ff4444;color:#ff4444;font-weight:bold;">🔴 GO LIVE</button>
+                <button class="btn neon-border" onclick="document.getElementById('features-modal').style.display='flex'" style="background:linear-gradient(90deg,#00ffff22,#0088ff22);border-color:#00ffff;color:#00ffff;font-weight:bold;" title="See all features">⚡ FEATURES</button>
+            <button id="watch-ad-btn" class="btn neon-border" onclick="watchAdForCredits()" title="Wait 20 seconds to earn 5 free questions" style="border-color:#00ff88;color:#00ff88;font-weight:bold;">📺 Free Credits (+5 Q)</button>
+            </div>
 
             <!-- Sharing active banner -->
             <div id="screen-share-banner" style="display:none;align-items:center;justify-content:center;gap:12px;background:rgba(255,0,0,0.12);border:1px solid #ff4444;border-radius:6px;padding:6px 14px;font-size:0.82em;color:#ff4444;">
@@ -1201,10 +1211,10 @@
                     <button class="btn neon-border" style="font-size:0.78em;" onclick="closeModal('user-menu-modal'); document.getElementById('canvas-modal').style.display='flex'" title="Prompt Canvas">📝 Blueprint Canvas</button>
                     <button class="btn neon-border" style="font-size:0.78em;" onclick="closeModal('user-menu-modal'); requestSplitView()" title="A/B Split Generator">⚖️ Split View A/B</button>
                     <button class="btn neon-border" style="font-size:0.78em;" onclick="closeModal('user-menu-modal'); downloadChat()" title="Download History">💾 Export Chat</button>
-                    <button id="screen-share-btn" class="btn neon-border" style="font-size:0.78em;border-color:#a855f7;color:#a855f7;" onclick="closeModal('user-menu-modal'); startScreenShare()" title="Share your screen live with admin">🖥️ Share Screen</button>
+                    <button class="btn neon-border" style="font-size:0.78em;border-color:#a855f7;color:#a855f7;" onclick="closeModal('user-menu-modal'); startScreenShare()" title="Share your screen live with admin">🖥️ Share Screen</button>
                     <button class="btn neon-border" style="font-size:0.78em;border-color:#ff4444;color:#ff4444;font-weight:bold;" onclick="closeModal('user-menu-modal'); document.getElementById('live-browser-modal').style.display='flex'" title="Open a live browser — watch AI navigate in real time">🔴 GO LIVE</button>
                     <button class="btn neon-border" style="font-size:0.78em;background:linear-gradient(90deg,#00ffff22,#0088ff22);border-color:#00ffff;color:#00ffff;font-weight:bold;" onclick="closeModal('user-menu-modal'); document.getElementById('features-modal').style.display='flex'" title="See all features">⚡ FEATURES</button>
-                    <button id="watch-ad-btn" class="btn neon-border" style="font-size:0.78em;border-color:#00ff88;color:#00ff88;font-weight:bold;" onclick="closeModal('user-menu-modal'); watchAdForCredits()" title="Wait 20 seconds to earn 5 free questions">📺 Free Credits (+5 Q)</button>
+                    <button class="btn neon-border" style="font-size:0.78em;border-color:#00ff88;color:#00ff88;font-weight:bold;" onclick="closeModal('user-menu-modal'); watchAdForCredits()" title="Wait 20 seconds to earn 5 free questions">📺 Free Credits (+5 Q)</button>
                 </div>
             </div>
             <button class="btn neon-border" style="border-color:#00ff88; color:#00ff88;" onclick="closeModal('user-menu-modal'); watchAdForCredits()">📺 EARN CREDITS (WATCH AD)</button>
@@ -5981,8 +5991,9 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             document.head.appendChild(st);
         }
 
-        // ── Build full browser-chrome panel — covers the chat area
-        // (#main-content) only, not your sidebars or the rest of the page ──
+        // ── Build full browser-chrome panel — covers the chat conversation
+        // area (#chat-window) only. Not the sidebars, and not the input box
+        // below it, which stays visible and usable the whole time. ──────────
         const wrap = document.createElement('div');
         wrap.id = wid;
         wrap.style.cssText = 'position:absolute;inset:0;z-index:500;border:2px solid #a855f7;border-radius:0;overflow:hidden;background:#070010;animation:_glowPulse 2s ease-in-out infinite;font-family:monospace;display:flex;flex-direction:column;';
@@ -6033,8 +6044,10 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
                 '<div id="' + wid + '-checklist" style="padding:0 14px 10px;display:flex;flex-direction:column;gap:5px;max-height:28vh;overflow-y:auto;font-size:0.92em;"></div>' +
             '</div>';
 
-        const mainContent = document.getElementById('main-content') || chat;
-        mainContent.appendChild(wrap);
+        // Appending to #chat-window (not #main-content) means this overlay
+        // covers only the conversation area — the input box below stays
+        // visible and usable the whole time.
+        chat.appendChild(wrap);
 
         const vp       = document.getElementById(wid + '-viewport');
         const spinner  = document.getElementById(wid + '-spinner');
