@@ -1406,6 +1406,7 @@
                 <button class="btn" style="border-color:#0f0; color:#0f0;" onclick="showAdminTab('admin-monitor'); fetchLiveUserStats()">LIVE MONITOR</button>
                 <button class="btn" onclick="showAdminTab('admin-ads')">ADS</button>
                 <button class="btn" style="border-color:#ff0050; color:#ff0050;" onclick="showAdminTab('admin-tiktok'); loadTikTokLinks()">TIKTOK LINKS</button>
+                <button class="btn" style="border-color:#00ff88; color:#00ff88;" onclick="showAdminTab('admin-tools')">🛠️ TOOLS</button>
                 <span style="border-left:1px solid #444; margin:0 4px;"></span>
                 <button class="btn" style="font-size:0.7em; border-color:#aaa; color:#aaa;" onclick="testPlanLights('police')">🚨 TEST POLICE</button>
                 <button class="btn" style="font-size:0.7em; border-color:#00ff44; color:#00ff44;" onclick="testPlanLights('green')">🟢 TEST GREEN</button>
@@ -1500,6 +1501,24 @@
                     <p style="color: #aaa; text-align: center;">Loading links...</p>
                 </div>
             </div>
+
+            <div id="admin-tools" class="admin-tab" style="display:none;">
+                <h3 style="color:#00ff88; text-transform: uppercase; letter-spacing: 2px;">Tools</h3>
+                <p style="font-size:0.8em; color:#aaa; margin-bottom: 20px;">
+                    The same tools every user has access to from their own ⚙️ menu — listed here too, so you don't have to leave the admin panel to use them.
+                </p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; max-width: 800px;">
+                    <button class="btn neon-border" onclick="closeModal('admin-modal'); document.getElementById('smart-paste-modal').style.display='flex'" title="Smart Paste Cleaner">📋 Clean Paste</button>
+                    <button class="btn neon-border" onclick="closeModal('admin-modal'); document.getElementById('polisher-modal').style.display='flex'" title="Grammar Polisher">✍️ Polish Text</button>
+                    <button class="btn neon-border" onclick="closeModal('admin-modal'); document.getElementById('canvas-modal').style.display='flex'" title="Prompt Canvas">📝 Blueprint Canvas</button>
+                    <button class="btn neon-border" onclick="closeModal('admin-modal'); requestSplitView()" title="A/B Split Generator">⚖️ Split View A/B</button>
+                    <button class="btn neon-border" onclick="closeModal('admin-modal'); downloadChat()" title="Download History">💾 Export Chat</button>
+                    <button class="btn neon-border" style="border-color:#a855f7;color:#a855f7;" onclick="closeModal('admin-modal'); startScreenShare()" title="Share your screen live">🖥️ Share Screen</button>
+                    <button class="btn neon-border" style="border-color:#ff4444;color:#ff4444;font-weight:bold;" onclick="closeModal('admin-modal'); document.getElementById('live-browser-modal').style.display='flex'" title="Open a live browser — watch AI navigate in real time">🔴 GO LIVE</button>
+                    <button class="btn neon-border" style="background:linear-gradient(90deg,#00ffff22,#0088ff22);border-color:#00ffff;color:#00ffff;font-weight:bold;" onclick="closeModal('admin-modal'); document.getElementById('features-modal').style.display='flex'" title="See all features">⚡ FEATURES</button>
+                </div>
+            </div>
+
 <div id="admin-ads" class="admin-tab" style="display:none;">
                 <h3>AD MANAGEMENT</h3>
                 <div style="margin-bottom: 20px;">
