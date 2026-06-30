@@ -1,5 +1,6 @@
 
 
+
 <!-- build:20260625-pink -->
 <!DOCTYPE html>
 <html lang="en">
@@ -6031,9 +6032,14 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             clearInterval(lmTimer);
 
             if (!d.ok || !d.frames || !d.frames.length) {
-                spinner.innerHTML = '<div style="color:#f44;padding:20px;font-size:0.85em;">⚠️ ' + escapeHtml(d.error || 'No screenshots returned. Check BROWSERBASE_API_KEY.') + '</div>';
+                const errText = d.error || 'No screenshots returned. Check BROWSERBASE_API_KEY.';
+                spinner.innerHTML = '<div style="color:#f44;padding:20px;font-size:0.85em;">⚠️ ' + escapeHtml(errText) + '</div>';
                 statusLb.textContent = 'Error';
                 document.getElementById(wid + '-livebadge').innerHTML = '<span style="color:#f44;">✗ OFFLINE</span>';
+                // Also post it as a normal chat message — the box above can be
+                // small or scrolled past, but a real chat bubble is always
+                // visible without hunting for it.
+                appendMessage('assistant', '⚠️ Browser error: ' + errText);
                 return;
             }
 
@@ -6146,129 +6152,8 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             spinner.innerHTML = '<div style="color:#f44;padding:20px;font-size:0.85em;">⚠️ ' + escapeHtml(err.message || 'Unknown error') + '</div>';
             spinner.style.display = 'flex';
             statusLb.textContent = 'Error: ' + (err.message || '').slice(0,50);
+            appendMessage('assistant', '⚠️ Browser error: ' + (err.message || 'Unknown error'));
         }
-    }
-
-        async function _openLiveBrowser() {
-        const urlInput = document.getElementById('live-browser-url');
-        const taskInput = document.getElementById('live-browser-task');
-        let url = (urlInput?.value || '').trim();
-        const task = (taskInput?.value || '').trim();
-        if (!url) return;
-        if (!url.startsWith('http')) url = 'https://' + url;
-        document.getElementById('live-browser-modal').style.display = 'none';
-        urlInput.value = '';
-        if (taskInput) taskInput.value = '';
-
-        // Build a basic action set — navigate + screenshot + click all links
-        const req = {
-            url,
-            actions: [
-                { type: 'screenshot', label: 'Initial page load' },
-                { type: 'scroll', y: 300, label: 'Scroll down' },
-                { type: 'screenshot', label: 'After scroll' }
-            ],
-            task
-        };
-        await _runBrowserSlideshow(req);
-    }
-
-    async function _runBrowserSlideshow(req) {
-        const chat = document.getElementById('chat-window');
-        const wid = 'brow-' + Date.now();
-        const token = typeof currentToken !== 'undefined' ? currentToken : '';
-
-        // ── Build the browser panel ───────────────────────────────────────
-        const wrap = document.createElement('div');
-        wrap.id = wid;
-        wrap.style.cssText = 'border:2px solid #a855f7;border-radius:10px;overflow:hidden;margin:8px 0;background:#0a001a;';
-        wrap.innerHTML = `
-            <div style="background:#120020;padding:7px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #a855f733;">
-                <span style="color:#a855f7;font-weight:bold;font-size:0.82em;letter-spacing:1px;">🌐 NEOCRYPTZ AI BROWSER</span>
-                <span id="${wid}-status" style="color:#888;font-size:0.75em;flex:1;">Connecting to live browser...</span>
-                <span id="${wid}-dot" style="background:#ff4444;border-radius:50%;width:8px;height:8px;display:inline-block;animation:badgePulse 0.6s infinite alternate;"></span>
-            </div>
-            <div id="${wid}-content" style="min-height:240px;display:flex;align-items:center;justify-content:center;color:#a855f7;font-size:0.88em;padding:20px;">
-                ⠹ Starting live browser session...
-            </div>`;
-        chat.appendChild(wrap);
-        chat.scrollTop = chat.scrollHeight;
-
-        const ct = document.getElementById(wid + '-content');
-        const st = document.getElementById(wid + '-status');
-        const dot = document.getElementById(wid + '-dot');
-
-        try {
-            // ── Single call: create session + navigate + click all buttons + screenshots ──
-            st.textContent = '⠹ Connecting browser and navigating...';
-            const runRes = await fetch('/api/browser-run', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                body: JSON.stringify({ url: req.url, task: req.task || '' })
-            });
-            const d = await runRes.json();
-
-            dot.style.animation = 'none';
-
-            if (!d.ok || !d.frames || !d.frames.length) {
-                ct.innerHTML = '<div style="color:#f44;padding:20px;font-size:0.85em;">⚠️ ' + escapeHtml(d.error || 'Browser returned no screenshots. Check BROWSERBASE_API_KEY in Vercel.') + '</div>';
-                st.textContent = 'Error';
-                dot.style.background = '#ff4444';
-                return;
-            }
-
-            dot.style.background = '#00ff88';
-            st.textContent = d.summary || (d.frames.length + ' steps captured');
-            ct.style.cssText = 'position:relative;';
-
-            // ── Animate through real screenshots rapidly ───────────────────
-            for (let i = 0; i < d.frames.length; i++) {
-                const frame = d.frames[i];
-                const isLast = i === d.frames.length - 1;
-                ct.innerHTML = `<div style="position:relative;">
-                    <img src="data:image/jpeg;base64,${frame.image}" style="width:100%;display:block;max-height:70vh;object-fit:contain;background:#000;" />
-                    <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.85);color:${frame.label?.startsWith('✅')?'#0f0':frame.label?.startsWith('⚠️')?'#fa0':'#a855f7'};font-size:0.76em;padding:6px 12px;font-family:monospace;">
-                        ${escapeHtml(frame.label || '')} · Step ${i+1}/${d.frames.length}
-                    </div>
-                    ${!isLast ? '' : '<div style="position:absolute;top:10px;right:10px;background:rgba(0,200,100,0.9);color:#000;padding:4px 14px;border-radius:20px;font-size:0.78em;font-weight:bold;">✓ Done</div>'}
-                </div>`;
-                if (i < d.frames.length - 1) await new Promise(r => setTimeout(r, 600));
-            }
-
-            // ── Summary report ────────────────────────────────────────────
-            if (d.report && d.report.length) {
-                const rep = document.createElement('div');
-                rep.style.cssText = 'background:#0a001a;border-top:1px solid #a855f733;padding:10px 14px;font-size:0.76em;font-family:monospace;max-height:180px;overflow-y:auto;';
-                rep.innerHTML = '<div style="color:#a855f7;font-weight:bold;margin-bottom:6px;">🔍 Button Report:</div>' +
-                    d.report.map(r => `<div style="padding:2px 0;color:${r.navigated?'#0f0':r.error?'#f44':'#fa0'};">
-                        ${r.navigated?'✅':r.error?'❌':'⚠️'} "${escapeHtml(r.element)}" — ${r.navigated?'goes to '+escapeHtml(r.destination):r.error||'no destination'}
-                    </div>`).join('');
-                wrap.appendChild(rep);
-            }
-            chat.scrollTop = chat.scrollHeight;
-
-        } catch(e) {
-            if (ct) ct.innerHTML = '<div style="color:#f44;padding:20px;font-size:0.85em;">Failed: ' + escapeHtml(e.message) + '</div>';
-        }
-    }
-
-    function _showBrowserFrame(wid, idx) {
-        const frames = (window._browserFrames || {})[wid];
-        if (!frames || !frames[idx]) return;
-        const frame = frames[idx];
-        const ct = document.getElementById(wid + '-content');
-        if (!ct) return;
-        const isLast = idx === frames.length - 1;
-        ct.innerHTML = `<div style="position:relative;">
-            <img src="data:image/jpeg;base64,${frame.image}" style="width:100%;display:block;max-height:500px;object-fit:contain;" />
-            <!-- Film overlay: user can see but not interact while AI is working -->
-            <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.035) 0px,rgba(0,0,0,0.035) 1px,transparent 1px,transparent 3px);pointer-events:all;cursor:default;"></div>
-            ${!isLast ? `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;"><div style="background:rgba(168,85,247,0.88);color:#fff;padding:9px 22px;border-radius:22px;font-size:0.84em;font-weight:bold;letter-spacing:1px;box-shadow:0 4px 20px rgba(168,85,247,0.4);">⚡ Working...</div></div>` : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;"><div style="background:rgba(0,255,136,0.8);color:#000;padding:9px 22px;border-radius:22px;font-size:0.84em;font-weight:bold;letter-spacing:1px;">✓ Done</div></div>`}
-            <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.82);color:#a855f7;font-size:0.74em;padding:5px 10px;font-family:monospace;">${escapeHtml(frame.label || '')} · Step ${idx+1} of ${frames.length} · ${escapeHtml(frame.url || '')}</div>
-        </div>`;
-        const dotsEl = document.getElementById(wid + '-dots');
-        if (dotsEl) dotsEl.querySelectorAll('button').forEach((b, i) => b.style.background = i === idx ? '#a855f7' : '#333');
-        document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
     }
 
     function startWatchRequestPolling() {
