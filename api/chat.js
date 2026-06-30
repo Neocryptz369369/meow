@@ -283,6 +283,20 @@ help; a simple acknowledgment is enough.`;
         return /<<<BROWSER_PERMISSION>>>/.test(text || '');
     }
 
+    // A separate, specific guard: the model sometimes invents a confident
+    // "Authorized! ... now has access to X" message — mimicking what a real
+    // OAuth grant might look like — when nothing of the sort actually
+    // happened. There's no code path anywhere in this app that grants
+    // OAuth-style platform access this way, so a claim like this with no
+    // real action behind it is always fabricated, regardless of how
+    // official it sounds. Caught the same way as the other fake-success
+    // patterns: treated as a failure so the waterfall moves to the next
+    // provider instead of showing it to the user as if it were real.
+    function isFakeAuthClaim(text) {
+        const hasAuthClaim = /\b(authorized!?|access granted|now has access to)\b/i.test(text || '');
+        return hasAuthClaim && !hasRealAction(text);
+    }
+
     for (const provider of providerOrder) {
         try {
             // 1. Pollinations (no key required — first in waterfall)
@@ -299,7 +313,7 @@ help; a simple acknowledgment is enough.`;
                     text = normalizeProviderText(text);
                     const { text: adStrippedText, wasAdOnly } = stripPollinationsAd(text);
                     text = adStrippedText;
-                    if (wasAdOnly || (looksLikeActionRequest(prompt) && !hasRealAction(text))) {
+                    if (wasAdOnly || isFakeAuthClaim(text) || (looksLikeActionRequest(prompt) && !hasRealAction(text))) {
                         lastError += wasAdOnly
                             ? "Pollinations returned only its sponsor blurb, no real content | "
                             : "Pollinations claimed action without a real EXEC block | ";
@@ -329,7 +343,7 @@ help; a simple acknowledgment is enough.`;
                     if (data.choices?.[0]?.message) {
                         let text = data.choices[0].message.content;
                         text = normalizeProviderText(text);
-                        if (looksLikeActionRequest(prompt) && !hasRealAction(text)) {
+                        if (isFakeAuthClaim(text) || (looksLikeActionRequest(prompt) && !hasRealAction(text))) {
                             lastError += "SambaNova claimed action without a real EXEC block | ";
                         } else {
                             const { text: cleanText, browserRequest } = extractBrowserBlock(text);
@@ -357,7 +371,7 @@ help; a simple acknowledgment is enough.`;
                     if (data.candidates?.[0]?.content?.parts?.[0]) {
                         let text = data.candidates[0].content.parts[0].text;
                         text = normalizeProviderText(text);
-                        if (looksLikeActionRequest(prompt) && !hasRealAction(text)) {
+                        if (isFakeAuthClaim(text) || (looksLikeActionRequest(prompt) && !hasRealAction(text))) {
                             lastError += "Gemini claimed action without a real EXEC block | ";
                         } else {
                             const { text: cleanText, browserRequest } = extractBrowserBlock(text);
@@ -386,7 +400,7 @@ help; a simple acknowledgment is enough.`;
                     if (data.choices?.[0]?.message) {
                         let text = data.choices[0].message.content;
                         text = normalizeProviderText(text);
-                        if (looksLikeActionRequest(prompt) && !hasRealAction(text)) {
+                        if (isFakeAuthClaim(text) || (looksLikeActionRequest(prompt) && !hasRealAction(text))) {
                             lastError += "OpenRouter claimed action without a real EXEC block | ";
                         } else {
                             const { text: cleanText, browserRequest } = extractBrowserBlock(text);
