@@ -5994,6 +5994,15 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
                 '<span style="color:#ff4444;font-size:0.7em;white-space:nowrap;" id="' + wid + '-stepcount">Step 0/0</span>' +
                 '<span style="flex:1;height:1px;background:#a855f733;"></span>' +
                 '<span id="' + wid + '-statuslabel" style="color:#a855f7;font-size:0.72em;letter-spacing:0.3px;text-align:right;max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">⠹ Connecting...</span>' +
+            '</div>' +
+            // Checklist panel — populated once real steps are known (after the
+            // API responds with the actual frame list). Toggleable so it
+            // doesn't take over the view if someone just wants to watch.
+            '<div style="background:#0a0015;border-top:1px solid #a855f722;">' +
+                '<div onclick="document.getElementById(\'' + wid + '-checklist\').style.display = document.getElementById(\'' + wid + '-checklist\').style.display===\'none\'?\'block\':\'none\';" style="padding:6px 14px;color:#a855f7;font-size:0.68em;letter-spacing:0.5px;cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none;">' +
+                    '<span>▾</span><span>STEPS</span>' +
+                '</div>' +
+                '<div id="' + wid + '-checklist" style="padding:0 14px 10px;display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto;"></div>' +
             '</div>';
 
         chat.appendChild(wrap);
@@ -6033,6 +6042,22 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             spinner.style.display = 'none';
             urlbar.textContent = '🌐 ' + req.url;
             prog.style.width = '0%';
+
+            // ── Populate checklist with every real step up front ───────────
+            // Showing the whole plan at once (greyed out, pending) and then
+            // lighting each one up as it actually plays is what makes this
+            // feel like a real running checklist rather than a single status
+            // line that overwrites itself.
+            const checklistEl = document.getElementById(wid + '-checklist');
+            if (checklistEl) {
+                checklistEl.innerHTML = d.frames.map((f, idx) => {
+                    const shortLbl = (f.label || ('Step ' + (idx+1))).replace(/^[\u2705\u26a0\ufe0f\u274c\u2139\ufe0f\s]+/, '');
+                    return '<div id="' + wid + '-cl' + idx + '" style="display:flex;align-items:center;gap:8px;font-size:0.74em;color:#555;transition:color 0.3s;">' +
+                        '<span id="' + wid + '-clmark' + idx + '" style="width:14px;text-align:center;flex-shrink:0;">○</span>' +
+                        '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(shortLbl.slice(0,90)) + '</span>' +
+                    '</div>';
+                }).join('');
+            }
 
             // ── Helper: show one frame with cursor animation overlay ───────
             async function showFrame(frame, idx, total) {
@@ -6088,6 +6113,15 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
                     lolabel.style.cssText = 'position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.8);color:' + lblColor + ';font-size:0.73em;padding:7px 14px;font-family:monospace;letter-spacing:0.4px;z-index:15;backdrop-filter:blur(4px);border-top:1px solid ' + lblColor + '44;';
                     lolabel.textContent = lbl;
                     vp.appendChild(lolabel);
+                }
+
+                // Light up the matching checklist row
+                const clRow = document.getElementById(wid + '-cl' + idx);
+                const clMark = document.getElementById(wid + '-clmark' + idx);
+                if (clRow && clMark) {
+                    clRow.style.color = lblColor;
+                    clMark.textContent = lbl.startsWith('❌') ? '✕' : lbl.startsWith('⚠️') ? '!' : '✓';
+                    clRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
                 }
             }
 
