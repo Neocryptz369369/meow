@@ -66,7 +66,7 @@ module.exports = async function handler(req, res) {
 
     let providerOrder = keys && keys.PROVIDER_ORDER
         ? keys.PROVIDER_ORDER.split(',').map(p => p.trim().toLowerCase())
-        : ['pollinations', 'sambanova', 'gemini', 'openrouter'];
+        : ['gemini', 'pollinations', 'sambanova', 'openrouter'];
 
     const systemKeys = {
         'GOOGLE_API_KEY':      process.env.GOOGLE_API_KEY      || "",
@@ -180,6 +180,18 @@ If a user asks where to put an API key, tell them:
     // actual reply. This converts that shape into the same <<<EXEC>>> text
     // format the rest of this file (and the front-end pipeline) already
     // knows how to handle, so it goes through the normal flow instead.
+    // Pollinations' free tier occasionally appends (or, on a bad response,
+    // returns ONLY) a "support us" sponsor blurb — a markdown block
+    // mentioning "Support Pollinations.AI" and a kofi/redirect link. This
+    // strips that out of any response before it's shown or processed, and
+    // flags it separately if a response turns out to be nothing else.
+    function stripPollinationsAd(rawText) {
+        const text = rawText || '';
+        const adPattern = /-{2,}\s*\n*\s*\*{0,2}Support Pollinations\.AI:?\*{0,2}[\s\S]*?pollinations\.ai\/redirect\/kofi[\s\S]*?(?:\.|accessible for everyone\.?)/gi;
+        const stripped = text.replace(adPattern, '').replace(/^-{2,}\s*$/gm, '').trim();
+        return { text: stripped, wasAdOnly: stripped.length === 0 && text.length > 0 };
+    }
+
     function normalizeProviderText(rawText) {
         const trimmed = (rawText || '').trim();
         if (!trimmed.startsWith('{')) return rawText;
@@ -262,8 +274,12 @@ If a user asks where to put an API key, tell them:
                 if (polRes.ok) {
                     let text = await polRes.text();
                     text = normalizeProviderText(text);
-                    if (looksLikeActionRequest(prompt) && !hasRealAction(text)) {
-                        lastError += "Pollinations claimed action without a real EXEC block | ";
+                    const { text: adStrippedText, wasAdOnly } = stripPollinationsAd(text);
+                    text = adStrippedText;
+                    if (wasAdOnly || (looksLikeActionRequest(prompt) && !hasRealAction(text))) {
+                        lastError += wasAdOnly
+                            ? "Pollinations returned only its sponsor blurb, no real content | "
+                            : "Pollinations claimed action without a real EXEC block | ";
                     } else {
                         const { text: cleanText, browserRequest } = extractBrowserBlock(text);
                         await upsertCache(supabase, prompt, cleanText);
