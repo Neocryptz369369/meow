@@ -4358,6 +4358,17 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
         }
 
         async function saveTikTokLink() {
+            // Always get the freshest token directly from Supabase session
+            // rather than from localStorage, so a stale or fake local token
+            // can never accidentally get sent here instead of the real one.
+            let adminToken = localStorage.getItem('token');
+            try {
+                const { data: sessionData } = await supabaseClient.auth.getSession();
+                if (sessionData && sessionData.session && sessionData.session.access_token) {
+                    adminToken = sessionData.session.access_token;
+                }
+            } catch(e) {}
+
             const idEl  = document.getElementById('tk-id');
             const url   = (document.getElementById('tk-url')   || {}).value?.trim() || '';
             const urlsEl  = document.getElementById('tk-image-urls');
@@ -4380,7 +4391,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             try {
                 const r = await fetch('/api/admin/tiktok', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + adminToken },
                     body: JSON.stringify({
                         action: 'upsert', id,
                         visual_badge_text: '🔥 TikTok',
