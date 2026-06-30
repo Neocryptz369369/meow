@@ -172,6 +172,42 @@ If a user asks where to put an API key, tell them:
         return { text: cleanText, browserRequest: req };
     }
 
+    // Some providers (Pollinations included, depending on which model it
+    // routes to) return a JSON object with separate "reasoning" and
+    // "tool_calls" fields instead of plain text with an <<<EXEC>>> block.
+    // Without this, that raw JSON — including the model's private internal
+    // reasoning — was being shown to the user verbatim as if it were the
+    // actual reply. This converts that shape into the same <<<EXEC>>> text
+    // format the rest of this file (and the front-end pipeline) already
+    // knows how to handle, so it goes through the normal flow instead.
+    function normalizeProviderText(rawText) {
+        const trimmed = (rawText || '').trim();
+        if (!trimmed.startsWith('{')) return rawText;
+
+        let parsed;
+        try { parsed = JSON.parse(trimmed); } catch (e) { return rawText; }
+        if (!parsed || !Array.isArray(parsed.tool_calls) || !parsed.tool_calls.length) return rawText;
+
+        const call = parsed.tool_calls[0];
+        const fn = call && call.function;
+        if (!fn || !fn.name) return rawText;
+
+        let args = fn.arguments;
+        if (typeof args === 'string') {
+            try { args = JSON.parse(args); } catch (e) { args = {}; }
+        }
+        if (!args || typeof args !== 'object') args = {};
+
+        // The model's own tool name may not exactly match an action name
+        // (e.g. "EXEC" itself, or a slightly different label) — pull the
+        // real action out of args.action if present, otherwise fall back
+        // to the function name.
+        const action = args.action || fn.name;
+        const execPayload = JSON.stringify({ ...args, action });
+
+        return `<<<EXEC>>>\n${execPayload}\n<<<END_EXEC>>>`;
+    }
+
     for (const provider of providerOrder) {
         try {
             // 1. Pollinations (no key required — first in waterfall)
@@ -185,6 +221,7 @@ If a user asks where to put an API key, tell them:
                 });
                 if (polRes.ok) {
                     let text = await polRes.text();
+                    text = normalizeProviderText(text);
                     const { text: cleanText, browserRequest } = extractBrowserBlock(text);
                     await upsertCache(supabase, prompt, cleanText);
                     saveHistory(supabase, username, prompt, cleanText);
@@ -208,6 +245,7 @@ If a user asks where to put an API key, tell them:
                     const data = await sambaRes.json();
                     if (data.choices?.[0]?.message) {
                         let text = data.choices[0].message.content;
+                        text = normalizeProviderText(text);
                         const { text: cleanText, browserRequest } = extractBrowserBlock(text);
                         await upsertCache(supabase, prompt, cleanText);
                         saveHistory(supabase, username, prompt, cleanText);
@@ -231,6 +269,7 @@ If a user asks where to put an API key, tell them:
                     const data = await resGemini.json();
                     if (data.candidates?.[0]?.content?.parts?.[0]) {
                         let text = data.candidates[0].content.parts[0].text;
+                        text = normalizeProviderText(text);
                         const { text: cleanText, browserRequest } = extractBrowserBlock(text);
                         await upsertCache(supabase, prompt, cleanText);
                         saveHistory(supabase, username, prompt, cleanText);
@@ -255,6 +294,7 @@ If a user asks where to put an API key, tell them:
                     const data = await orRes.json();
                     if (data.choices?.[0]?.message) {
                         let text = data.choices[0].message.content;
+                        text = normalizeProviderText(text);
                         const { text: cleanText, browserRequest } = extractBrowserBlock(text);
                         await upsertCache(supabase, prompt, cleanText);
                         saveHistory(supabase, username, prompt, cleanText);
