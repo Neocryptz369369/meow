@@ -7,7 +7,7 @@ module.exports = async function handler(req, res) {
     const admin = await requireAdmin(req, res);
     if (!admin) return;
 
-    const supabaseUrl = process.env.SUPABASE_URL || 'https://' + SUPABASE_REF + '.supabase.co';
+    const supabaseUrl = 'https://bxzvxgjnlvbexeuocbey.supabase.co';
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!key) return res.status(500).json({ error: 'Missing service role key' });
 
