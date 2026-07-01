@@ -10,10 +10,14 @@ module.exports = async function handler(req, res) {
         
         const { data, error } = await supabase
             .from('tiktok_recommendations')
-            .insert({
-                id: 'tk_test_' + Date.now(),
+            .upsert({
+                id: 'tk_test_upsert',
                 product_name: 'Test Product',
-                destination_url: 'https://tiktok.com'
+                destination_url: 'https://tiktok.com',
+                visual_badge_text: 'TikTok',
+                display_headline: '',
+                image_url: '',
+                is_active: true
             })
             .select();
             
@@ -21,11 +25,10 @@ module.exports = async function handler(req, res) {
             error: error.message,
             code: error.code,
             details: error.details,
-            hint: error.hint,
-            step: 'INSERT failed'
+            step: 'UPSERT failed'
         });
         
-        return res.status(200).json({ ok: true, data, step: 'INSERT worked' });
+        return res.status(200).json({ ok: true, data, step: 'UPSERT worked' });
     } catch(e) {
         return res.status(200).json({ error: e.message, step: 'exception' });
     }
