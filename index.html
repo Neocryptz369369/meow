@@ -3288,13 +3288,7 @@
             const featureItems = `<span class="ticker-item" style="color:#00ffff;">🤖 Multi-Model AI Chat</span><span class="ticker-item" style="color:#00ffff;">🎙️ Voice Input</span><span class="ticker-item" style="color:#00ffff;">🖼️ AI Image Generation — type /imagine</span><span class="ticker-item" style="color:#00ffff;">🌐 GO LIVE — Watch AI Browse the Web</span><span class="ticker-item" style="color:#00ffff;">📊 Batch CSV Processing (20 prompts at once)</span><span class="ticker-item" style="color:#00ffff;">🔒 Secret Keys Vault — 100% Private</span><span class="ticker-item" style="color:#00ffff;">📋 Clean Paste Tool</span><span class="ticker-item" style="color:#00ffff;">✍️ Grammar Polisher</span><span class="ticker-item" style="color:#00ffff;">🎨 Blueprint Canvas — Build Complex Prompts</span><span class="ticker-item" style="color:#00ffff;">⚖️ Split A/B View — Compare AI Responses</span><span class="ticker-item" style="color:#00ffff;">🔗 Embed Your Own Chatbot on Any Website</span><span class="ticker-item" style="color:#00ffff;">🎁 Gift Vouchers Available</span><span class="ticker-item" style="color:#00ffff;">👥 Corporate Team Plans</span><span class="ticker-item" style="color:#00ffff;">💬 Direct Support Chat</span><span class="ticker-item" style="color:#00ffff;">🎯 Referral Program — Earn Rewards</span><span class="ticker-item" style="color:#00ffff;">💳 Plans from $10/mo — or Watch an Ad for FREE Credits</span><span class="ticker-item" style="color:#00ffff;">🔑 OAuth Platform Authorization</span><span class="ticker-item" style="color:#00ffff;">🌍 24 Features. One Platform. Neocryptz AI Cloud OS.</span>`;
             ticker.innerHTML = ads.map(a => `<span class="ticker-item">${a.text}</span>`).join('') + featureItems;
 
-            // Populate ad boxes
-            for (let i = 1; i <= 4; i++) {
-                const el = document.getElementById(`ad-${i}`);
-                if (el) {
-                    el.innerText = ads[i-1] ? ads[i-1].text : 'Sponsored Content';
-                }
-            }
+            // Ad boxes are now handled by TikTok affiliate system — don't overwrite them here
 
             // Update ticker speed mock
             const storedSpeed = localStorage.getItem('tickerSpeed') || "25";
