@@ -2528,7 +2528,7 @@
             input.disabled = true; // Lock text box during countdown
             micBtn.disabled = true;
 
-            let countdown = (myUsername === 'Neocryptz') ? 0 : 60;
+            let countdown = (myUsername.toLowerCase() === 'neocryptz' || isAdmin) ? 0 : 60;
             if (countdown === 0) {
                 btn.disabled = false;
                 input.disabled = false;
