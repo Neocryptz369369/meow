@@ -53,3 +53,6 @@ module.exports = async function handler(req, res) {
           return res.status(500).json({ error: e.message });
     }
 };
+
+// Allow large image uploads (up to 10MB base64)
+module.exports.config = { api: { bodyParser: { sizeLimit: '10mb' } } };
