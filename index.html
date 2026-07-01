@@ -1,11 +1,10 @@
 
 
 
-<!-- build:20260625-pink -->
+<!-- build:20260701-pink -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="google-adsense-account" content="ca-pub-5017188678144132">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -2541,25 +2540,13 @@
                 var cat = document.getElementById('cooldown-ad-timer');
                 var cas = document.getElementById('cooldown-ad-slot');
                 if (!cam) return;
-                // Populate cooldown ad slot — TikTok only
-                cas.innerHTML = '';
-                if (typeof _tikAds !== 'undefined' && _tikAds && _tikAds.length > 0) {
-                    var cad = _tikAds[typeof _tikIdx!=='undefined'?_tikIdx:0] || _tikAds[0];
-                    var cimg = cad.image_url || '';
-                    if (cimg) {
-                        cas.innerHTML = '<div style="position:absolute;inset:0;overflow:hidden;">'
-                            + '<img src="'+cimg+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="TikTok Product">'
-                            + '<span style="position:absolute;top:5px;left:5px;z-index:2;background:rgba(0,0,0,0.62);color:#fff;font-size:9px;padding:2px 7px;border-radius:3px;pointer-events:none;">Sponsored</span>'
-                            + '</div>';
-                        var chGoUrl = cad.id ? '/api/recommendations/go?id=' + encodeURIComponent(cad.id) : '';
-                        cas.style.pointerEvents = 'auto';
-                        if (chGoUrl) { cas.style.cursor = 'pointer'; cas.onclick = function(e) { e.stopPropagation(); _tikOpen(chGoUrl); }; }
-                    } else {
-                        cas.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#555;font-size:0.75em;">No TikTok ad configured</div>';
-                    }
-                } else {
-                    cas.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#555;font-size:0.75em;">No TikTok ad configured</div>';
-                }
+                // Populate cooldown ad slot — same rendering as sidebar boxes
+                                            if (typeof renderTikCard === 'function') {
+                                                                                var _cAd = (typeof _tikAds !== 'undefined' && _tikAds && _tikAds.length > 0)
+                                                                                    ? (_tikAds[typeof _tikIdx !== 'undefined' ? _tikIdx : 0] || _tikAds[0])
+                                                                                                                        : null;
+                                                                                renderTikCard(_cAd, 'cooldown-ad-slot');
+                                            }
                 var cdLeft = countdown;
                 if (cat) cat.textContent = cdLeft;
                 cam.style.display = 'flex';
@@ -6699,13 +6686,12 @@ function startAdCooldown(seconds, btn) {
     <div id="cooldown-ad-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.82); z-index:9999; align-items:center; justify-content:center;">
         <div style="background:#0a0a0a; border:1px solid #ff00ff; border-radius:14px; padding:22px 26px; text-align:center; max-width:360px; width:90%; box-shadow:0 0 30px rgba(255,0,255,0.2); position:relative;">
             <button onclick="document.getElementById('cooldown-ad-modal').style.display='none'" style="position:absolute;top:8px;right:12px;background:none;border:none;color:#666;font-size:1.2em;cursor:pointer;">✕</button>
-            <p style="color:#aaa; margin:0 0 10px; font-size:0.8em;">Next question available in</p>
+                    <p style="color:#aaa; margin:0 0 4px; font-size:0.8em;">Next question available in</p>
             <div id="cooldown-ad-timer" style="font-size:3em; color:#ff00ff; font-weight:bold; font-family:monospace; line-height:1; margin-bottom:14px;">60</div>
-            <div id="cooldown-ad-slot" style="width:100%;height:160px;background:#111;border-radius:8px;overflow:hidden;margin-bottom:10px;position:relative;"></div>
-            <p style="color:#555; font-size:0.68em;">Ad · closes automatically when timer ends</p>
+                    <div id="cooldown-ad-slot" style="width:100%;height:180px;background:#111;border-radius:8px;overflow:hidden;margin-bottom:10px;position:relative;"></div>
+                    <p style="color:#ff00ff; font-size:0.72em; font-weight:bold; margin:0 0 4px;">📺 Sponsored Ad · Watch = +5 Q Credits</p>
         </div>
     </div>
-
     <!-- Features Modal -->
     <div id="features-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;align-items:center;justify-content:center;overflow-y:auto;">
       <div style="background:#0a0a0a;border:1px solid #00ffff;border-radius:14px;padding:28px;max-width:600px;width:92%;margin:20px auto;box-shadow:0 0 40px rgba(0,255,255,0.15);">
