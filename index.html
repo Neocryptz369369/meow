@@ -1,7 +1,7 @@
 
 
 
-<!-- build:20260702-pink -->
+<!-- build:20260701-pink -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1415,19 +1415,7 @@
                 </div>
             </div>
             <button class="btn" onclick="closeModal('settings-modal')" style="margin-top: 20px;">CLOSE</button>
-
-            <!-- AI PROVIDER SELECTOR -->
-            <div class="settings-section" style="border:1px solid #00ffc8;padding:14px;border-radius:8px;margin-bottom:12px;">
-                <h3 style="color:#00ffc8;font-family:monospace;margin-bottom:10px;">🤖 AI PROVIDER</h3>
-                <p style="color:#aaa;font-size:12px;margin-bottom:10px;">Select which AI provider powers your chat. OpenRouter uses GPT-4o.</p>
-                <select id="user-ai-provider-select" style="width:100%;padding:8px;background:#111;color:#00ffc8;border:1px solid #00ffc8;border-radius:4px;font-family:monospace;" onchange="saveUserAIProvider(this.value)">
-                    <option value="openrouter">⚡ OpenRouter (GPT-4o) — Recommended</option>
-                    <option value="gemini">🌐 Gemini (Google)</option>
-                    <option value="groq">🔥 Groq (Fast Free)</option>
-                    <option value="pollinations">🌸 Pollinations (Free)</option>
-                    <option value="sambanova">🧠 SambaNova (Free)</option>
-                </select>
-            </div>        </div>
+        </div>
     </div>
 
     <div id="admin-modal" class="modal neon-border" style="z-index:99999;">
@@ -1934,8 +1922,6 @@
                         credits: 999999,
                         is_admin: true
                     };
-                    // Admin override: ensure neocryptz always has admin rights
-                    if (currentUser && currentUser.username === 'neocryptz') { currentUser.is_admin = true; currentUser.plan = 'Unlimited'; }
                     localStorage.setItem('token', session.access_token);
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 } else {
@@ -1976,8 +1962,6 @@
                      currentUser.is_co_admin = currentUser.is_admin; // flag: co-admin, not owner
                 }
 
-                // Admin override — always grant admin rights to neocryptz regardless of which auth path was used
-                if (currentUser && currentUser.username === 'neocryptz') { currentUser.is_admin = true; currentUser.plan = 'Unlimited'; localStorage.setItem('currentUser', JSON.stringify(currentUser)); }
                 if (currentUser.is_admin) {
                      document.getElementById('admin-icon-wrap').style.display = 'inline-block';
                      document.getElementById('user-icon').style.display = 'none';
@@ -2544,7 +2528,43 @@
             input.disabled = true; // Lock text box during countdown
             micBtn.disabled = true;
 
-
+            let countdown = (myUsername.toLowerCase() === 'neocryptz' || isAdmin) ? 0 : 60;
+            if (countdown === 0) {
+                btn.disabled = false;
+                input.disabled = false;
+                micBtn.disabled = false;
+                btn.innerText = 'EXECUTE';
+            } else {
+            // Show ad overlay during 60s cooldown
+            (function showCooldownAd() {
+                var cam = document.getElementById('cooldown-ad-modal');
+                var cat = document.getElementById('cooldown-ad-timer');
+                var cas = document.getElementById('cooldown-ad-slot');
+                if (!cam) return;
+                // Populate cooldown ad slot — same rendering as sidebar boxes
+                                            if (typeof renderTikCard === 'function') {
+                                                                                var _cAd = (typeof _tikAds !== 'undefined' && _tikAds && _tikAds.length > 0)
+                                                                                    ? (_tikAds[typeof _tikIdx !== 'undefined' ? _tikIdx : 0] || _tikAds[0])
+                                                                                                                        : null;
+                                                                                renderTikCard(_cAd, 'cooldown-ad-slot');
+                                            }
+                var cdLeft = countdown;
+                if (cat) cat.textContent = cdLeft;
+                cam.style.display = 'flex';
+            })();
+                const timer = setInterval(() => {
+                    btn.innerText = `WAIT ${--countdown}s`;
+                    var _cat = document.getElementById('cooldown-ad-timer'); if(_cat) _cat.textContent = countdown;
+                    if (countdown <= 0) {
+                        clearInterval(timer);
+                        var cam2 = document.getElementById('cooldown-ad-modal'); if(cam2) cam2.style.display='none';
+                        btn.disabled = false;
+                        input.disabled = false;
+                        micBtn.disabled = false;
+                        btn.innerText = 'EXECUTE';
+                    }
+                }, 1000);
+            }
 
             let currentToken = localStorage.getItem('token') || 'local-token';
 
@@ -2928,44 +2948,7 @@
                     // Record usage and history
                     if (myUsername !== 'Neocryptz') {
                         usageData[myUsername].count += 1;
-                        localStorage.setItem('dailyUsage', JSON.st
-            let countdown = (myUsername.toLowerCase() === 'neocryptz' || isAdmin) ? 0 : 60;
-            if (countdown === 0) {
-                btn.disabled = false;
-                input.disabled = false;
-                micBtn.disabled = false;
-                btn.innerText = 'EXECUTE';
-            } else {
-            // Show ad overlay during 60s cooldown
-            (function showCooldownAd() {
-                var cam = document.getElementById('cooldown-ad-modal');
-                var cat = document.getElementById('cooldown-ad-timer');
-                var cas = document.getElementById('cooldown-ad-slot');
-                if (!cam) return;
-                // Populate cooldown ad slot — same rendering as sidebar boxes
-                                            if (typeof renderTikCard === 'function') {
-                                                                                var _cAd = (typeof _tikAds !== 'undefined' && _tikAds && _tikAds.length > 0)
-                                                                                    ? (_tikAds[typeof _tikIdx !== 'undefined' ? _tikIdx : 0] || _tikAds[0])
-                                                                                                                        : null;
-                                                                                renderTikCard(_cAd, 'cooldown-ad-slot');
-                                            }
-                var cdLeft = countdown;
-                if (cat) cat.textContent = cdLeft;
-                cam.style.display = 'flex';
-            })();
-                const timer = setInterval(() => {
-                    btn.innerText = `WAIT ${--countdown}s`;
-                    var _cat = document.getElementById('cooldown-ad-timer'); if(_cat) _cat.textContent = countdown;
-                    if (countdown <= 0) {
-                        clearInterval(timer);
-                        var cam2 = document.getElementById('cooldown-ad-modal'); if(cam2) cam2.style.display='none';
-                        btn.disabled = false;
-                        input.disabled = false;
-                        micBtn.disabled = false;
-                        btn.innerText = 'EXECUTE';
-                    }
-                }, 1000);
-            }ringify(usageData));
+                        localStorage.setItem('dailyUsage', JSON.stringify(usageData));
                         if (myPlan === 'Free') { lifetimeUsage[myUsername] += 1; localStorage.setItem('lifetimeUsage', JSON.stringify(lifetimeUsage)); }
                     }
                     let globalChat = JSON.parse(localStorage.getItem('globalChatHistory') || '[]');
@@ -3025,24 +3008,6 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: currentUser?.username, action: 'save', user_msg: msg, ai_response: aiText })
             }).catch(() => {}); // fire and forget
-        }
-
-        // ── AI Provider selector (user-side gear icon) ──
-        function saveUserAIProvider(provider) {
-            localStorage.setItem('user_ai_provider', provider);
-            // Update system fallback order to put chosen provider first
-            const allProviders = ['openrouter', 'sambanova', 'gemini', 'groq', 'pollinations'];
-            const ordered = [provider, ...allProviders.filter(p => p !== provider)].join(',');
-            localStorage.setItem('sys_api_fallback_order', ordered);
-            showStatus('AI provider set to ' + provider + '!', '#00ffc8');
-        }
-
-        function loadUserAIProvider() {
-            const saved = localStorage.getItem('user_ai_provider') || 
-                          localStorage.getItem('sys_api_fallback_order')?.split(',')[0] || 
-                          'openrouter';
-            const sel = document.getElementById('user-ai-provider-select');
-            if (sel) sel.value = saved;
         }
 
         // ── Change password — works for both local accounts and real Supabase accounts ──
@@ -3512,9 +3477,6 @@
                 loadUsersAndLogs();
                 const _ads = document.getElementById('ad-sidebar');
                 if (_ads) _ads.style.display = 'none';
-            }
-            if (id === 'settings-modal') {
-                loadUserAIProvider();
             }
             if (id === 'user-menu-modal') { qvRender(); }
             if (id === 'settings-modal') { renderOAuthList(); loadAIAuthStatus(); loadSecretKeys(); }
