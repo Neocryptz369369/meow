@@ -1415,7 +1415,19 @@
                 </div>
             </div>
             <button class="btn" onclick="closeModal('settings-modal')" style="margin-top: 20px;">CLOSE</button>
-        </div>
+
+            <!-- AI PROVIDER SELECTOR -->
+            <div class="settings-section" style="border:1px solid #00ffc8;padding:14px;border-radius:8px;margin-bottom:12px;">
+                <h3 style="color:#00ffc8;font-family:monospace;margin-bottom:10px;">🤖 AI PROVIDER</h3>
+                <p style="color:#aaa;font-size:12px;margin-bottom:10px;">Select which AI provider powers your chat. OpenRouter uses GPT-4o.</p>
+                <select id="user-ai-provider-select" style="width:100%;padding:8px;background:#111;color:#00ffc8;border:1px solid #00ffc8;border-radius:4px;font-family:monospace;" onchange="saveUserAIProvider(this.value)">
+                    <option value="openrouter">⚡ OpenRouter (GPT-4o) — Recommended</option>
+                    <option value="gemini">🌐 Gemini (Google)</option>
+                    <option value="groq">🔥 Groq (Fast Free)</option>
+                    <option value="pollinations">🌸 Pollinations (Free)</option>
+                    <option value="sambanova">🧠 SambaNova (Free)</option>
+                </select>
+            </div>        </div>
     </div>
 
     <div id="admin-modal" class="modal neon-border" style="z-index:99999;">
@@ -3013,6 +3025,24 @@
             }).catch(() => {}); // fire and forget
         }
 
+        // ── AI Provider selector (user-side gear icon) ──
+        function saveUserAIProvider(provider) {
+            localStorage.setItem('user_ai_provider', provider);
+            // Update system fallback order to put chosen provider first
+            const allProviders = ['openrouter', 'sambanova', 'gemini', 'groq', 'pollinations'];
+            const ordered = [provider, ...allProviders.filter(p => p !== provider)].join(',');
+            localStorage.setItem('sys_api_fallback_order', ordered);
+            showStatus('AI provider set to ' + provider + '!', '#00ffc8');
+        }
+
+        function loadUserAIProvider() {
+            const saved = localStorage.getItem('user_ai_provider') || 
+                          localStorage.getItem('sys_api_fallback_order')?.split(',')[0] || 
+                          'openrouter';
+            const sel = document.getElementById('user-ai-provider-select');
+            if (sel) sel.value = saved;
+        }
+
         // ── Change password — works for both local accounts and real Supabase accounts ──
         async function changeMyPassword() {
             const curEl = document.getElementById('change-pass-current');
@@ -3480,6 +3510,9 @@
                 loadUsersAndLogs();
                 const _ads = document.getElementById('ad-sidebar');
                 if (_ads) _ads.style.display = 'none';
+            }
+            if (id === 'settings-modal') {
+                loadUserAIProvider();
             }
             if (id === 'user-menu-modal') { qvRender(); }
             if (id === 'settings-modal') { renderOAuthList(); loadAIAuthStatus(); loadSecretKeys(); }
