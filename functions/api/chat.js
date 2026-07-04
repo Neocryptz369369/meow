@@ -1,5 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
-
 export async function onRequestPost(context) {
     const request = context.request;
     const env = context.env;
@@ -48,42 +46,52 @@ export async function onRequestPost(context) {
           return Response.json({ result: reply, provider: "Instant (no AI call needed)" });
     }
 
-  async function upsertCache(supabase, promptText, responseText) {
-        if (!supabase) return;
-        try {
-                await supabase.from('query_cache').upsert(
-                          [{ prompt: promptText.trim(), response: responseText }],
-                  { onConflict: 'prompt' }
-                        );
-        } catch (e) {
-                console.error("Cache upsert failed:", e.message);
-        }
-  }
+function sbHeaders(supabaseKey) {
+return {
+'apikey': supabaseKey,
+'Authorization': `Bearer ${supabaseKey}`,
+'Content-Type': 'application/json'
+};
+}
 
-  function saveHistory(supabase, uname, user_msg, ai_response) {
-        if (!supabase || !uname || uname === 'Unknown') return;
-        supabase.from('chat_history')
-          .insert([{ username: uname, user_msg, ai_response }])
-          .then(() => {}).catch(() => {});
-  }
+async function upsertCache(supabaseUrl, supabaseKey, promptText, responseText) {
+if (!supabaseUrl || !supabaseKey) return;
+try {
+await fetch(`${supabaseUrl}/rest/v1/query_cache?on_conflict=prompt`, {
+method: 'POST',
+headers: { ...sbHeaders(supabaseKey), 'Prefer': 'resolution=merge-duplicates' },
+body: JSON.stringify([{ prompt: promptText.trim(), response: responseText }])
+});
+} catch (e) {
+console.error("Cache upsert failed:", e.message);
+}
+}
 
-  const supabaseUrl = env.SUPABASE_URL || 'https://bxzvxgjnlvbexeuocbey.supabase.co';
-    const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_KEY;
-    let supabase = null;
+function saveHistory(supabaseUrl, supabaseKey, uname, user_msg, ai_response) {
+if (!supabaseUrl || !supabaseKey || !uname || uname === 'Unknown') return;
+fetch(`${supabaseUrl}/rest/v1/chat_history`, {
+method: 'POST',
+headers: sbHeaders(supabaseKey),
+body: JSON.stringify([{ username: uname, user_msg, ai_response }])
+}).then(() => {}).catch(() => {});
+}
 
-  if (supabaseKey) {
-        try {
-                supabase = createClient(supabaseUrl, supabaseKey);
-                const { data, error } = await supabase
-                  .from('query_cache')
-                  .select('response')
-                  .eq('prompt', prompt.trim())
-                  .single();
-                if (data && data.response) {
-                          return Response.json({ result: data.response, provider: "System Cache (Zero-Cost)" });
-                }
-        } catch (e) { console.log("Cache lookup skipped."); }
-  }
+const supabaseUrl = env.SUPABASE_URL || env.neocryptz_final_url || 'https://bxzvxgjnlvbexeuocbey.supabase.co';
+const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_KEY || env.neocryptz_final_anon;
+
+if (supabaseKey) {
+try {
+const cacheRes = await fetch(`${supabaseUrl}/rest/v1/query_cache?prompt=eq.${encodeURIComponent(prompt.trim())}&select=response`, {
+headers: sbHeaders(supabaseKey)
+});
+if (cacheRes.ok) {
+const rows = await cacheRes.json();
+if (rows && rows[0] && rows[0].response) {
+return Response.json({ result: rows[0].response, provider: "System Cache (Zero-Cost)" });
+}
+}
+} catch (e) { console.log("Cache lookup skipped."); }
+}
 
   let providerOrder = keys && keys.PROVIDER_ORDER
       ? keys.PROVIDER_ORDER.split(',').map(p => p.trim().toLowerCase())
@@ -266,8 +274,8 @@ export async function onRequestPost(context) {
                                                                     lastError += "OpenRouter claimed action without a real EXEC block | ";
                                                     } else {
                                                                     const { text: cleanText, browserRequest } = extractBrowserBlock(text);
-                                                                    await upsertCache(supabase, prompt, cleanText);
-                                                                    saveHistory(supabase, username, prompt, cleanText);
+                                                                    await upsertCache(supabaseUrl, supabaseKey, prompt, cleanText);
+                                                                    saveHistory(supabaseUrl, supabaseKey, username, prompt, cleanText);
                                                                     return Response.json({ result: cleanText, browserRequest, provider: "OpenRouter" });
                                                     }
                                       }
@@ -293,8 +301,8 @@ export async function onRequestPost(context) {
             lastError += "Gemini claimed action without a real EXEC block | ";
           } else {
             const { text: cleanText, browserRequest } = extractBrowserBlock(text);
-            await upsertCache(supabase, prompt, cleanText);
-            saveHistory(supabase, username, prompt, cleanText);
+            await upsertCache(supabaseUrl, supabaseKey, prompt, cleanText);
+            saveHistory(supabaseUrl, supabaseKey, username, prompt, cleanText);
             return Response.json({ result: cleanText, browserRequest, provider: "Gemini" });
           }
         }
@@ -321,8 +329,8 @@ export async function onRequestPost(context) {
             lastError += "SambaNova claimed action without a real EXEC block | ";
           } else {
             const { text: cleanText, browserRequest } = extractBrowserBlock(text);
-            await upsertCache(supabase, prompt, cleanText);
-            saveHistory(supabase, username, prompt, cleanText);
+            await upsertCache(supabaseUrl, supabaseKey, prompt, cleanText);
+            saveHistory(supabaseUrl, supabaseKey, username, prompt, cleanText);
             return Response.json({ result: cleanText, browserRequest, provider: "SambaNova" });
           }
         }
@@ -350,8 +358,8 @@ export async function onRequestPost(context) {
             : "Pollinations claimed action without a real EXEC block | ";
         } else {
           const { text: cleanText, browserRequest } = extractBrowserBlock(text);
-          await upsertCache(supabase, prompt, cleanText);
-          saveHistory(supabase, username, prompt, cleanText);
+          await upsertCache(supabaseUrl, supabaseKey, prompt, cleanText);
+          saveHistory(supabaseUrl, supabaseKey, username, prompt, cleanText);
           return Response.json({ result: cleanText, browserRequest, provider: "Pollinations" });
         }
       } else {
