@@ -75,6 +75,6 @@ export async function onRequestGet(context) {
 
         return Response.json(remoteUsers);
   } catch (e) {
-          return Response.json({ error: e.message }, { status: 500 });
+    return Response.json({ error: e.message, cause: String(e.cause), stack: e.stack?.slice(0, 300) }, { status: 500 });
   }
 }
