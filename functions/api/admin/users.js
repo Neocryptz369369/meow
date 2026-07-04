@@ -5,7 +5,7 @@ async function requireAdmin(request, env) {
     const token = header.startsWith('Bearer ') ? header.slice(7).trim() : null;
     if (!token) return { error: 'Missing Authorization header', status: 401 };
 
-  const supabaseUrl = env.SUPABASE_URL || env.neocryptz_final_url || 'https://bxzvxgjnlvbexeuocbey.supabase.co';
+    const supabaseUrl = 'https://bxzvxgjnlvbexeuocbey.supabase.co';
     const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_KEY;
 
   try {
