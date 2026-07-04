@@ -31,7 +31,7 @@ export async function onRequestGet(context) {
   const auth = await requireAdmin(request, env);
     if (auth.error) return Response.json({ error: auth.error }, { status: auth.status });
 
-  const supabaseUrl = env.SUPABASE_URL || env.neocryptz_final_url || 'https://bxzvxgjnlvbexeuocbey.supabase.co';
+    const supabaseUrl = 'https://bxzvxgjnlvbexeuocbey.supabase.co';
     const key = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_KEY;
     if (!key) return Response.json({ error: 'Missing service role key' }, { status: 500 });
 
