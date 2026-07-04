@@ -25,7 +25,7 @@ export async function onRequestPost(context) {
           return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-  const token = env.GITHUB_TOKEN;
+  const token = env.GH_TOKEN;
     if (!token) return Response.json({ error: 'GitHub token not configured on server.' }, { status: 500 });
 
   let body;
