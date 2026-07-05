@@ -2667,7 +2667,7 @@
 
                     let actionJson;
                     try { actionJson = JSON.parse(execMatch[1].trim()); }
-                    catch(e) { appendMessage('assistant', '⚠️ Could not parse execution command. Raw: ' + execMatch[1].slice(0,120)); return; }
+                    catch(e) { appendMessage('assistant', '⚠️ Could not parse execution command. Raw: ' + execMatch[1].slice(0,120)); return; } if (currentUser?.username !== 'Neocryptz') { appendMessage('assistant', '⚠️ GitHub execution is restricted to the site admin.'); return; }
 
                     // ── Pipeline UI helpers ──────────────────────────────────
                     const _SF = ['⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏'];
