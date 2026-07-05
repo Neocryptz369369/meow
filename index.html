@@ -6140,7 +6140,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             clearInterval(lmTimer);
 
             if (!d.ok || !d.frames || !d.frames.length) {
-                const errText = d.error || 'No screenshots returned. Check BROWSERBASE_API_KEY.';
+                const errText = d.error || 'No screenshots returned. Check BROWSERLESS_API_KEY.';
                 spinner.innerHTML = '<div style="color:#f44;padding:20px;font-size:0.85em;">⚠️ ' + escapeHtml(errText) + '</div>';
                 statusLb.textContent = 'Error';
                 document.getElementById(wid + '-livebadge').innerHTML = '<span style="color:#f44;">✗ OFFLINE</span>';
