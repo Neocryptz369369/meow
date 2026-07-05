@@ -257,7 +257,7 @@
             resEl.innerText = "Simulating total AI failure... routing to Doomsday Fallback...";
 
                 // Include user's Secret Keys Vault — decrypt each key before sending to AI
-                const _rawVaultKeys = JSON.parse(localStorage.getItem('user_secret_keys') || '[]');
+                const _rawVaultKeys = JSON.parse(localStorage.getItem(`user_secret_keys_${(currentUser?.username || 'guest').toLowerCase()}`) || '[]');
                 for (const k of _rawVaultKeys) {
                     if (k.label && k.value) {
                         const plainVal = k.encrypted ? await _decryptVaultValue(k.value) : k.value;
@@ -5623,9 +5623,9 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             if (!label || !value) { if(status) status.textContent = '⚠ Enter both a label and a key.'; return; }
             if(status) status.textContent = 'Encrypting...';
             const encrypted = await _encryptVaultValue(value);
-            const keys = JSON.parse(localStorage.getItem('user_secret_keys') || '[]');
+            const keys = JSON.parse(localStorage.getItem(`user_secret_keys_${(currentUser?.username || 'guest').toLowerCase()}`) || '[]');
             keys.push({ label, value: encrypted, encrypted: true, saved: new Date().toLocaleString() });
-            localStorage.setItem('user_secret_keys', JSON.stringify(keys));
+            localStorage.setItem(`user_secret_keys_${(currentUser?.username || 'guest').toLowerCase()}`, JSON.stringify(keys));
             document.getElementById('qv-label').value = '';
             document.getElementById('qv-value').value = '';
             if(status) { status.textContent = '✓ Encrypted and saved — AI will use it automatically.'; setTimeout(()=>{ if(status) status.textContent=''; },3000); }
@@ -5634,7 +5634,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
         function qvRender() {
             const list = document.getElementById('qv-list');
             if (!list) return;
-            const keys = JSON.parse(localStorage.getItem('user_secret_keys') || '[]');
+            const keys = JSON.parse(localStorage.getItem(`user_secret_keys_${(currentUser?.username || 'guest').toLowerCase()}`) || '[]');
             if (!keys.length) { list.innerHTML = '<p style="color:#555;font-size:0.75em;margin:0;">No keys saved yet.</p>'; return; }
             list.innerHTML = keys.map((k,i) =>
                 '<div style="display:flex;align-items:center;justify-content:space-between;background:#111;border:1px solid #f59e0b33;border-radius:4px;padding:4px 8px;margin-bottom:3px;">'
@@ -5644,9 +5644,9 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             ).join('');
         }
         function qvDelete(i) {
-            const keys = JSON.parse(localStorage.getItem('user_secret_keys') || '[]');
+            const keys = JSON.parse(localStorage.getItem(`user_secret_keys_${(currentUser?.username || 'guest').toLowerCase()}`) || '[]');
             keys.splice(i,1);
-            localStorage.setItem('user_secret_keys', JSON.stringify(keys));
+            localStorage.setItem(`user_secret_keys_${(currentUser?.username || 'guest').toLowerCase()}`, JSON.stringify(keys));
             qvRender(); loadSecretKeys();
         }
 
@@ -5655,9 +5655,9 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             const value = document.getElementById('secret-key-value').value.trim();
             if (!label || !value) return alert('Please enter both a label and a key.');
             const encrypted = await _encryptVaultValue(value);
-            const keys = JSON.parse(localStorage.getItem('user_secret_keys') || '[]');
+            const keys = JSON.parse(localStorage.getItem(`user_secret_keys_${(currentUser?.username || 'guest').toLowerCase()}`) || '[]');
             keys.push({ label, value: encrypted, encrypted: true, saved: new Date().toLocaleString() });
-            localStorage.setItem('user_secret_keys', JSON.stringify(keys));
+            localStorage.setItem(`user_secret_keys_${(currentUser?.username || 'guest').toLowerCase()}`, JSON.stringify(keys));
             document.getElementById('secret-key-label').value = '';
             document.getElementById('secret-key-value').value = '';
             loadSecretKeys();
@@ -5671,16 +5671,16 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
         }
 
     function deleteSecretKey(index) {
-        const keys = JSON.parse(localStorage.getItem('user_secret_keys') || '[]');
+        const keys = JSON.parse(localStorage.getItem(`user_secret_keys_${(currentUser?.username || 'guest').toLowerCase()}`) || '[]');
         keys.splice(index, 1);
-        localStorage.setItem('user_secret_keys', JSON.stringify(keys));
+        localStorage.setItem(`user_secret_keys_${(currentUser?.username || 'guest').toLowerCase()}`, JSON.stringify(keys));
         loadSecretKeys();
     }
 
     function loadSecretKeys() {
         const container = document.getElementById('secret-keys-list');
         if (!container) return;
-        const keys = JSON.parse(localStorage.getItem('user_secret_keys') || '[]');
+        const keys = JSON.parse(localStorage.getItem(`user_secret_keys_${(currentUser?.username || 'guest').toLowerCase()}`) || '[]');
         if (keys.length === 0) {
             container.innerHTML = '<p style="color:#555; font-size:0.8em;">No keys saved yet.</p>';
             return;
