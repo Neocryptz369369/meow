@@ -6139,7 +6139,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             const d = await runRes.json();
             clearInterval(lmTimer);
 
-            if (!d.ok || !d.frames || !d.frames.length) {
+            const dr = d.data || d; if (!dr.ok || !dr.frames || !dr.frames.length) {
                 const errText = d.error || 'No screenshots returned. Check BROWSERLESS_API_KEY.';
                 spinner.innerHTML = '<div style="color:#f44;padding:20px;font-size:0.85em;">⚠️ ' + escapeHtml(errText) + '</div>';
                 statusLb.textContent = 'Error';
@@ -6163,7 +6163,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             // line that overwrites itself.
             const checklistEl = document.getElementById(wid + '-checklist');
             if (checklistEl) {
-                checklistEl.innerHTML = d.frames.map((f, idx) => {
+                checklistEl.innerHTML = dr.frames.map((f, idx) => {
                     const shortLbl = (f.label || ('Step ' + (idx+1))).replace(/^[\u2705\u26a0\ufe0f\u274c\u2139\ufe0f\s]+/, '');
                     return '<div id="' + wid + '-cl' + idx + '" style="display:flex;align-items:center;gap:9px;font-size:0.95em;color:#555;transition:color 0.3s;">' +
                         '<span id="' + wid + '-clmark' + idx + '" style="width:14px;text-align:center;flex-shrink:0;">○</span>' +
@@ -6239,15 +6239,15 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             }
 
             // ── Play all frames ────────────────────────────────────────────
-            const total = d.frames.length;
+            const total = dr.frames.length;
             for (let i = 0; i < total; i++) {
-                await showFrame(d.frames[i], i, total);
+                await showFrame(dr.frames[i], i, total);
                 if (i < total - 1) await new Promise(r => setTimeout(r, 550));
             }
 
             // ── Done — update badge and summary ───────────────────────────
             document.getElementById(wid + '-livebadge').innerHTML = '<span style="color:#00ff88;font-size:0.65em;font-weight:bold;letter-spacing:2px;">✓ COMPLETE</span>';
-            statusLb.textContent = d.summary || (total + ' steps captured');
+            statusLb.textContent = dr.summary || (total + ' steps captured');
             statusLb.style.color = '#00ff88';
             prog.style.width = '100%';
             prog.style.background = 'linear-gradient(90deg,#00ff88,#a855f7)';
