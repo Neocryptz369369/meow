@@ -282,7 +282,7 @@
             const timerEl = document.getElementById('cooldown-timer');
             const sponsorEl = document.getElementById('sponsor-content');
 
-            let timeLeft = (currentUser?.username === 'Neocryptz') ? 0 : 60;
+            let timeLeft = ((currentUser?.username || '').toLowerCase() === 'neocryptz') ? 0 : 60;
             if (timeLeft > 0) overlay.style.display = 'flex';
             timerEl.innerText = timeLeft + 's';
 
@@ -2478,7 +2478,7 @@
             // Enforce 50 word limit for user inputs
             const wordCount = msg.split(/\s+/).length;
             const myUsernameLimitCheck = currentUser?.username || 'Unknown';
-            if (myUsernameLimitCheck !== 'Neocryptz' && wordCount > 40) {
+            if (myUsernameLimitCheck.toLowerCase() !== 'neocryptz' && wordCount > 40) {
                 alert("Please keep your questions brief (40 words or less). Your message is currently " + wordCount + " words.");
                 return;
             }
@@ -2502,7 +2502,7 @@
                 usageData[myUsername] = { date: today, count: 0 }; // Reset for new day
             }
 
-            if (myUsername !== 'Neocryptz' && usageData[myUsername].count >= 40) {
+            if (myUsername.toLowerCase() !== 'neocryptz' && usageData[myUsername].count >= 40) {
                 appendMessage('assistant', 'ERROR: You have reached your daily limit of 40 questions. Please come back tomorrow!');
                 input.value = '';
                 return;
@@ -2512,7 +2512,7 @@
             let lifetimeUsage = JSON.parse(localStorage.getItem('lifetimeUsage') || '{}');
             if (!lifetimeUsage[myUsername]) lifetimeUsage[myUsername] = 0;
 
-            if (myPlan === 'Free' && lifetimeUsage[myUsername] >= 25 && myUsername !== 'Neocryptz') {
+            if (myPlan === 'Free' && lifetimeUsage[myUsername] >= 25 && myUsername.toLowerCase() !== 'neocryptz') {
                 appendMessage('assistant', 'You have used all 25 of your free trial credits! Please upgrade your plan to continue using Neocryptz AI.');
                 input.value = '';
                 setTimeout(() => openModal('pricing-modal'), 1500); // Auto pop-up pricing
@@ -2596,7 +2596,7 @@
             let historyPayload = [];
             try {
                 const allHistory = JSON.parse(localStorage.getItem('globalChatHistory') || '[]');
-                const historyLimit = (myUsername === 'Neocryptz') ? 20 : 10;
+                const historyLimit = (myUsername.toLowerCase() === 'neocryptz') ? 20 : 10;
                 historyPayload = allHistory.filter(h => h.username === myUsername).slice(-historyLimit);
             } catch(e) {}
 
@@ -2667,7 +2667,7 @@
 
                     let actionJson;
                     try { actionJson = JSON.parse(execMatch[1].trim()); }
-                    catch(e) { appendMessage('assistant', '⚠️ Could not parse execution command. Raw: ' + execMatch[1].slice(0,120)); return; } if (currentUser?.username !== 'Neocryptz') { appendMessage('assistant', '⚠️ GitHub execution is restricted to the site admin.'); return; }
+                    catch(e) { appendMessage('assistant', '⚠️ Could not parse execution command. Raw: ' + execMatch[1].slice(0,120)); return; } if ((currentUser?.username || '').toLowerCase() !== 'neocryptz') { appendMessage('assistant', '⚠️ GitHub execution is restricted to the site admin.'); return; }
 
                     // ── Pipeline UI helpers ──────────────────────────────────
                     const _SF = ['⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏'];
@@ -2946,7 +2946,7 @@
                     }
 
                     // Record usage and history
-                    if (myUsername !== 'Neocryptz') {
+                    if (myUsername.toLowerCase() !== 'neocryptz') {
                         usageData[myUsername].count += 1;
                         localStorage.setItem('dailyUsage', JSON.stringify(usageData));
                         if (myPlan === 'Free') { lifetimeUsage[myUsername] += 1; localStorage.setItem('lifetimeUsage', JSON.stringify(lifetimeUsage)); }
@@ -2978,7 +2978,7 @@
                 _ncTypewriter(aiText, () => { _ncDoneToast('✓ Done'); triggerWebhook(aiText); });
 
                 // Increment Usage Count on Success
-                if (myUsername !== 'Neocryptz') {
+                if (myUsername.toLowerCase() !== 'neocryptz') {
                     usageData[myUsername].count += 1;
                     localStorage.setItem('dailyUsage', JSON.stringify(usageData));
 
@@ -4103,7 +4103,7 @@
             document.getElementById('dirty-paste-box').value = ''; 
             const words = text.split(' ').filter(w => w.length > 0).length;
             const usernameToCheck = currentUser?.username || 'Unknown';
-            if (usernameToCheck !== 'Neocryptz' && words > 40) {
+            if (usernameToCheck.toLowerCase() !== 'neocryptz' && words > 40) {
                 alert("Notice: Even after cleaning, your text is " + words + " words. You must shorten it to 40 words before sending.");
             }
         }
