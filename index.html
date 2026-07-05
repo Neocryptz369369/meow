@@ -730,7 +730,7 @@
             --secondary: #00ffff; /* Neon Blue */
             --bg: #000;
             --text: #fff;
-            --ticker-speed: 25s;
+            --ticker-speed: 66s;
         }
         body { font-family: 'Courier New', Courier, monospace; background: url('crypt.png'); background-size: cover; background-position: center; background-attachment: fixed; color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         #sidebar { width: 250px; border-right: 1px solid var(--primary); display: flex; flex-direction: column; padding: 20px; box-shadow: 2px 0 10px rgba(255, 0, 255, 0.2); }
@@ -1546,7 +1546,7 @@
                     <button class="btn" onclick="createAd()">CREATE SYSTEM AD</button>
                 </div>
                 <div style="margin-bottom: 20px;">
-                    <label>Ticker Speed: <input type="range" id="speed-slider" min="5" max="150" value="25" oninput="updateSpeedVal(this.value)"> <span id="speed-val">25</span>s</label>
+                    <label>Ticker Speed: <input type="range" id="speed-slider" min="5" max="150" value="66" oninput="updateSpeedVal(this.value)"> <span id="speed-val">25</span>s</label>
                     <button class="btn" onclick="saveSettings()">SAVE SPEED</button>
                 </div>
                 <table style="width:100%; border-collapse: collapse;">
@@ -3279,7 +3279,7 @@
             // Ad boxes are now handled by TikTok affiliate system — don't overwrite them here
 
             // Update ticker speed mock
-            const storedSpeed = localStorage.getItem('tickerSpeed') || "25";
+            const storedSpeed = localStorage.getItem('tickerSpeed') || "66";
             document.documentElement.style.setProperty('--ticker-speed', `${storedSpeed}s`);
             if (document.getElementById('speed-slider')) {
                 document.getElementById('speed-slider').value = storedSpeed;
