@@ -1054,19 +1054,19 @@
         <div id="register-form" class="auth-form" style="display:none;">
             <h2 style="text-align:center;">REGISTER</h2>
             <p style="text-align:center; font-size: 0.8em; color: var(--secondary); margin-bottom: 10px;">* Standard users are limited to 40 questions per day.</p>
-            <input type="text" id="reg-user" placeholder="Username">
-            <input type="email" id="reg-email" placeholder="Email" autocomplete="username">
+            <input type="text" id="reg-user" placeholder="Username" autocomplete="off">
+            <input type="email" id="reg-email" placeholder="Email" autocomplete="off">
             <input type="password" id="reg-pass" placeholder="Password" autocomplete="new-password">
-            <input type="text" id="reg-name" placeholder="Full Name">
-            <input type="text" id="reg-address" placeholder="Address">
+            <input type="text" id="reg-name" placeholder="Full Name" autocomplete="off">
+            <input type="text" id="reg-address" placeholder="Address" autocomplete="off">
             <div style="display:flex; gap: 10px;">
-                <input type="text" id="reg-city" placeholder="City" style="flex: 2;">
-                <input type="text" id="reg-state" placeholder="State" style="flex: 1;">
-                <input type="text" id="reg-zip" placeholder="Zip Code" style="flex: 1;">
+                <input type="text" id="reg-city" placeholder="City" style="flex: 2;" autocomplete="off">
+                <input type="text" id="reg-state" placeholder="State" style="flex: 1;" autocomplete="off">
+                <input type="text" id="reg-zip" placeholder="Zip Code" style="flex: 1;" autocomplete="off">
             </div>
             <div style="display:flex; gap: 10px;">
-                <input type="text" id="reg-phone" placeholder="Phone Number" style="flex: 2;">
-                <input type="number" id="reg-age" placeholder="Age" style="flex: 1;" min="18">
+                <input type="text" id="reg-phone" placeholder="Phone Number" style="flex: 2;" autocomplete="off">
+                <input type="number" id="reg-age" placeholder="Age" style="flex: 1;" min="18" autocomplete="off">
             </div>
             <input type="text" id="reg-beta-code" placeholder="Beta Invite Code (Optional)" style="margin-bottom: 10px; padding: 10px; background: #111; border: 1px solid var(--secondary); color: #0f0;">
             <input type="text" id="reg-gift-code" placeholder="🎁 Gift Subscription Code (Optional)" style="margin-bottom: 10px; padding: 10px; background: #111; border: 1px solid #8a2be2; color: #c084fc; letter-spacing: 2px; text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
@@ -4209,10 +4209,10 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
                 const raw = await resp.json();
                 _tikAds = Array.isArray(raw) ? raw : [raw];
                 if (!_tikAds.length) throw new Error('empty');
-                _tikIdx = 0;
+                _tikIdx = Math.floor(Math.random() * _tikAds.length);
                 renderAllTikSlots();
                 setInterval(() => {
-                    _tikIdx = (_tikIdx + 1) % _tikAds.length;
+                    _tikIdx = Math.floor(Math.random() * _tikAds.length);
                     renderAllTikSlots();
                 }, 20 * 1000);
             } catch(e) {
