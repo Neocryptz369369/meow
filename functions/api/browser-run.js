@@ -27,7 +27,7 @@ export async function onRequestPost(context) {
         async function snap(label, pageUrl) {
             try {
                   const buf = await page.screenshot({ type: 'jpeg', quality: 75 });
-                        const base64 = buf.toString('base64');
+                                const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
                               frames.push({ label, image: base64, url: pageUrl || page.url() });
                                   } catch(e) {}
                                     }
