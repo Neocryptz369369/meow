@@ -2542,11 +2542,11 @@
                 var cas = document.getElementById('cooldown-ad-slot');
                 if (!cam) return;
                 // Populate cooldown ad slot — same rendering as sidebar boxes
-                                            if (typeof renderTikCard === 'function') {
+                                            if (typeof _renderTikCard === 'function') {
                                                                                 var _cAd = (typeof _tikAds !== 'undefined' && _tikAds && _tikAds.length > 0)
                                                                                     ? (_tikAds[typeof _tikIdx !== 'undefined' ? _tikIdx : 0] || _tikAds[0])
                                                                                                                         : null;
-                                                                                renderTikCard(_cAd, 'cooldown-ad-slot');
+                                                                                _renderTikCard(_cAd, 'cooldown-ad-slot');
                                             }
                 var cdLeft = countdown;
                 if (cat) cat.textContent = cdLeft;
