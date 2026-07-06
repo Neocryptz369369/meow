@@ -128,8 +128,8 @@ return Response.json({ result: rows[0].response, provider: "System Cache (Zero-C
   - For adding UI elements: use inject_html with position before_closing_body
   - For adding CSS: inject a <style> block using inject_html with position before_closing_head
   - For editing existing elements: use patch_file
-  - NEVER use push_file on large HTML files`
-      6. redeploy — {"action":"redeploy"} - triggers a fresh Cloudflare Pages deployment of the current commit, with no file changes. Use this when the user asks you to redeploy or restart the deployment without changing any code.; } systemPrompt += `
+  - NEVER use push_file on large HTML files
+      6. redeploy — {"action":"redeploy"} - triggers a fresh Cloudflare Pages deployment of the current commit, with no file changes. Use this when the user asks you to redeploy or restart the deployment without changing any code.`; } systemPrompt += `
   BROWSER AUTOMATION:
   When the user asks you to visit a website, output a <<<BROWSER_PERMISSION>>> block:
   <<<BROWSER_PERMISSION>>>
