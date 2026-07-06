@@ -1605,18 +1605,12 @@
             <div id="admin-settings" class="admin-tab" style="display:none;">
                 <h3>SYSTEM CONFIGURATION</h3>
 
-                <div style="margin-bottom: 20px; padding: 10px; border: 1px solid var(--secondary); background: #111;">
-                    <h4 style="color: var(--secondary); margin-top: 0;">AI Provider Fallback Order</h4>
-                    <p style="font-size: 0.8em; color: #aaa;">List comma-separated providers to set priority. The system will automatically cycle to the next if one fails.<br>Options: <i>openrouter, together, anyscale, openai, gemini, groq, pollinations</i></p>
-                    <input type="text" id="provider-order" value="gemini,openrouter,pollinations,groq" style="width: 100%; padding: 5px; background: #222; border: 1px solid var(--primary); color: #fff; margin-bottom: 10px;">
-                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                        <button class="btn" onclick="setProviderOrder('sambanova,gemini,openrouter,pollinations')">Supercomputer (OpenRouter) First</button>
-                        <button class="btn" onclick="setProviderOrder('openai,gemini,sambanova,pollinations')">OpenAI First</button>
-                        <button class="btn" onclick="setProviderOrder('pollinations,openrouter,openai')">Free First</button>
-                    </div>
-                </div>
-
-                <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ff0000; display: flex; align-items: center; justify-content: space-between;">
+                <div style="margin-bottom: 20px; padding: 10px; border: 2px solid #ff2d2d; background: #1a0000;">
+                    <h4 style="color: #ff2d2d; margin-top: 0;">AI WATERFALL PROVIDER KEYS</h4>
+                    <p style="font-size: 0.8em; color: #ff8080;">Enter each provider's API key below and use the arrows to set priority order. The system tries them top to bottom and moves to the next automatically if one fails.</p>
+                    <div id="waterfall-provider-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+                    <button class="btn" style="border-color:#ff2d2d; color:#ff2d2d; width:100%; margin-top:10px;" onclick="saveWaterfallProviders()">SAVE WATERFALL KEYS & ORDER</button>
+                </div><div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ff0000; display: flex; align-items: center; justify-content: space-between;">
                     <div>
                         <span style="color: #ff0000; font-weight: bold; font-size: 1.2em;">LOCK NEW REGISTRATIONS</span>
                         <p style="font-size: 0.8em; color: #aaa; margin-top: 5px;">If checked, new users will not be able to sign up or create accounts.</p>
@@ -2570,13 +2564,15 @@
 
             let keysPayload = {};
             try {
-                const defaultKeys = ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GOOGLE_API_KEY', 'GROQ_API_KEY'];
-                const trackedKeys = JSON.parse(localStorage.getItem('trackedApiKeys') || JSON.stringify(defaultKeys));
-                trackedKeys.forEach(k => {
-                    const val = localStorage.getItem(`sys_api_${k}`);
-                    if (val) keysPayload[k] = val;
-                });
-
+for (let i = 0; i < localStorage.length; i++) {
+    const lsKey = localStorage.key(i);
+    if (lsKey && lsKey.indexOf('sys_api_') === 0) {
+        const val = localStorage.getItem(lsKey);
+        if (val) keysPayload[lsKey.replace('sys_api_', '')] = val;
+    }
+}
+                const savedProviderOrder = (localStorage.getItem('providerOrder') || '').trim();
+                if (savedProviderOrder) keysPayload.PROVIDER_ORDER = savedProviderOrder;
                 // Attach local scrapes to keys payload for the doomsday fallback
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
@@ -4751,14 +4747,49 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             }
         }
 
+const WATERFALL_PROVIDERS = { openrouter: { label: 'OpenRouter', envKey: 'OPENROUTER_API_KEY' }, gemini: { label: 'Gemini', envKey: 'GOOGLE_API_KEY' }, sambanova: { label: 'SambaNova', envKey: 'SAMBANOVA_API_KEY' }, pollinations: { label: 'Pollinations', envKey: 'POLLINATIONS_API_KEY' } };
+        function _getWaterfallOrder() {
+            let saved = (localStorage.getItem('providerOrder') || '').split(',').map(s => s.trim().toLowerCase()).filter(s => WATERFALL_PROVIDERS[s]);
+            Object.keys(WATERFALL_PROVIDERS).forEach(k => { if (!saved.includes(k)) saved.push(k); });
+            return saved;
+        }
+        function renderWaterfallProviders() {
+            const list = document.getElementById('waterfall-provider-list');
+            if (!list) return;
+            const order = _getWaterfallOrder();
+            list.innerHTML = order.map((key, idx) => {
+                const p = WATERFALL_PROVIDERS[key];
+                const val = localStorage.getItem('sys_api_' + p.envKey) || '';
+                const upDis = idx === 0 ? 'disabled' : '';
+                const downDis = idx === order.length - 1 ? 'disabled' : '';
+                return "<div style='display:flex; align-items:center; gap:8px; background:#220000; border:1px solid #ff2d2d55; padding:6px 8px; border-radius:4px;'><span style='color:#ff2d2d; font-weight:bold; width:22px;'>" + (idx + 1) + ".</span><span style='color:#ff8080; width:100px; font-size:0.85em;'>" + p.label + "</span><input type='password' id='wf-key-" + key + "' value='" + escapeHtml(val) + "' placeholder='" + p.envKey + "' style='flex:1; padding:6px; background:#111; border:1px solid #ff2d2d; color:#fff;'><button class='btn' style='border-color:#ff2d2d; color:#ff2d2d; padding:4px 8px;' onclick=\"moveWaterfallProvider('" + key + "',-1)\" " + upDis + ">&#9650;</button><button class='btn' style='border-color:#ff2d2d; color:#ff2d2d; padding:4px 8px;' onclick=\"moveWaterfallProvider('" + key + "',1)\" " + downDis + ">&#9660;</button></div>";
+            }).join('');
+        }
+        function moveWaterfallProvider(key, dir) {
+            saveWaterfallProviders(true);
+            let order = _getWaterfallOrder();
+            const i = order.indexOf(key);
+            const j = i + dir;
+            if (j < 0 || j >= order.length) return;
+            const tmp = order[i]; order[i] = order[j]; order[j] = tmp;
+            localStorage.setItem('providerOrder', order.join(','));
+            renderWaterfallProviders();
+        }
+        function saveWaterfallProviders(silent) {
+            Object.keys(WATERFALL_PROVIDERS).forEach(key => {
+                const input = document.getElementById('wf-key-' + key);
+                if (input) localStorage.setItem('sys_api_' + WATERFALL_PROVIDERS[key].envKey, input.value.trim());
+            });
+            if (!silent) alert('Waterfall provider keys & order saved!');
+        }
         async function loadAdminData() {
             document.getElementById('lock-reg-checkbox').checked = localStorage.getItem('regLocked') === 'true';
-            document.getElementById('provider-order').value = localStorage.getItem('providerOrder') || 'sambanova,gemini,openrouter,pollinations';
+            renderWaterfallProviders();
             loadScrapes(); // Load scrapes
             if(document.getElementById('admin-beta-code')) document.getElementById('admin-beta-code').value = localStorage.getItem('activeBetaCode') || 'NEO-BETA-2027';
             if(document.getElementById('admin-base-guidelines')) document.getElementById('admin-base-guidelines').value = localStorage.getItem('adminBaseGuidelines') || '';
 
-            let feedbacks = JSON.parse(localStorage.getItem('globalFeedback') || '[]');
+                        let feedbacks = JSON.parse(localStorage.getItem('globalFeedback') || '[]');
             let fbHtml = '';
             if (feedbacks.length === 0) {
                 fbHtml = '<p style="color: #aaa;">No feedback recorded yet.</p>';
