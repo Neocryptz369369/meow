@@ -128,7 +128,8 @@ return Response.json({ result: rows[0].response, provider: "System Cache (Zero-C
   - For adding UI elements: use inject_html with position before_closing_body
   - For adding CSS: inject a <style> block using inject_html with position before_closing_head
   - For editing existing elements: use patch_file
-  - NEVER use push_file on large HTML files`; } systemPrompt += `
+  - NEVER use push_file on large HTML files`
+      6. redeploy — {"action":"redeploy"} - triggers a fresh Cloudflare Pages deployment of the current commit, with no file changes. Use this when the user asks you to redeploy or restart the deployment without changing any code.; } systemPrompt += `
   BROWSER AUTOMATION:
   When the user asks you to visit a website, output a <<<BROWSER_PERMISSION>>> block:
   <<<BROWSER_PERMISSION>>>
@@ -229,10 +230,10 @@ return Response.json({ result: rows[0].response, provider: "System Cache (Zero-C
 
   function looksLikeActionRequest(text) {
         const lower = (text || '').toLowerCase();
-        return /\b(push|deploy|create a file|make a file|add a file|commit|repo(sitory)?|patch|inject|update (the )?(site|page|file)|github|go to|visit|browse|press|click|navigate)\b/.test(lower);
+        return /\b(redeploy|push|deploy|create a file|make a file|add a file|commit|repo(sitory)?|patch|inject|update (the )?(site|page|file)|github|go to|visit|browse|press|click|navigate)\b/.test(lower);
   }
 
-  const KNOWN_EXEC_ACTIONS = ['list_repos', 'read_file_excerpt', 'inject_html', 'patch_file', 'push_file'];
+  const KNOWN_EXEC_ACTIONS = ['list_repos', 'read_file_excerpt', 'inject_html', 'patch_file', 'push_file', 'redeploy'];
     function hasRealAction(text) {
           const execMatch = (text || '').match(/<<<EXEC>>>([\s\S]*?)<<<END_EXEC>>+/);
           if (execMatch) {
