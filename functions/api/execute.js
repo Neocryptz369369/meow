@@ -172,6 +172,24 @@ export async function onRequestPost(context) {
               return Response.json({ error: pushData.message || 'GitHub push failed.' }, { status: 500 });
       }
 
+        if (action === 'redeploy') {
+                        const cfToken = env.CF_API_TOKEN;
+                        if (!cfToken) return Response.json({ error: 'CF_API_TOKEN not configured on server.' }, { status: 500 });
+                        const deployRes = await fetch('https://api.cloudflare.com/client/v4/accounts/35078329dfee4f3908f4b41ccde638a9/pages/projects/meow/deployments', {
+                                            method: 'POST',
+                                            headers: { 'Authorization': `Bearer ${cfToken}` }
+                        });
+                        const deployData = await deployRes.json();
+                        if (deployData.success) {
+                                            return Response.json({
+                                                                    success: true,
+                                                                    deployment_id: deployData.result?.id,
+                                                                    message: '✅ Redeploy triggered — Cloudflare is building the latest commit now.'
+                                            });
+                        }
+                        return Response.json({ error: deployData.errors?.[0]?.message || 'Cloudflare redeploy failed.' }, { status: 500 });
+        }
+      
       return Response.json({ error: 'Unknown action: ' + action }, { status: 400 });
 
   } catch (err) {
