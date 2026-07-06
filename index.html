@@ -1425,7 +1425,7 @@
                 <button class="btn" onclick="showAdminTab('admin-scrapes')">SCRAPERS</button>
                 <button class="btn" style="border-color:#0f0; color:#0f0;" onclick="showAdminTab('admin-monitor'); fetchLiveUserStats()">LIVE MONITOR</button>
                 <button class="btn" onclick="showAdminTab('admin-ads')">ADS</button>
-                <button class="btn" style="border-color:#ff0050; color:#ff0050;" onclick="showAdminTab('admin-tiktok'); loadTikTokLinks()">TIKTOK LINKS</button>
+                <button class="btn" style="border-color:#ff0050; color:#ff0050;" onclick="showAdminTab('admin-tiktok'); loadTikTokLinks(); loadTikTokRandomizeToggle()">TIKTOK LINKS</button>
                 <button class="btn" style="border-color:#00ff88; color:#00ff88;" onclick="showAdminTab('admin-tools')">🛠️ TOOLS</button>
                 <span style="border-left:1px solid #444; margin:0 4px;"></span>
                 <button class="btn" style="font-size:0.7em; border-color:#aaa; color:#aaa;" onclick="testPlanLights('police')">🚨 TEST POLICE</button>
@@ -1517,7 +1517,14 @@
                     <button class="btn neon-border" style="width: 100%; margin-top: 20px; padding: 15px; background: #ff0050; color: #fff; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase;" onclick="saveTikTokLink()">Save</button>
                 </div>
 
-                <div id="tiktok-links-container" style="max-height: 40vh; overflow-y: auto;">
+<div style="margin-bottom:16px; padding:10px 14px; border:1px solid #333; border-radius:8px; display:flex; align-items:center; gap:10px;">
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:#ccc; font-size:0.85em;">
+                                                    <input type="checkbox" id="tiktok-randomize-toggle" onchange="toggleTikTokRandomize(this.checked)">
+                                                    Randomize ad rotation (uncheck to use the fixed order set by the &#9650;&#9660; arrows below)
+                        </label>
+</div>
+                
+                                <div id="tiktok-links-container" style="max-height: 40vh; overflow-y: auto;">
                     <p style="color: #aaa; text-align: center;">Loading links...</p>
                 </div>
             </div>
@@ -4107,7 +4114,7 @@ for (let i = 0; i < localStorage.length; i++) {
         // Admin
         
         // ── Sidebar TikTok affiliate card (image-first, 5-min rotation) ──────────
-        let _tikAds = [], _tikIdx = 0;
+        let _tikAds = [], _tikIdx = 0, _tikRandomize = true;
 
         function _tikOpen(url) {     var a = document.createElement('a');     a.href = url; a.target = '_blank'; a.rel = 'noreferrer';     document.body.appendChild(a); a.click(); document.body.removeChild(a); }
 
@@ -4203,12 +4210,12 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
                 const resp = await fetch('/api/recommendations/active');
                 if (!resp.ok) throw new Error('status ' + resp.status);
                 const raw = await resp.json();
-                _tikAds = Array.isArray(raw) ? raw : [raw];
+                _tikAds = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.ads)) ? raw.ads : [raw]; _tikRandomize = (raw && typeof raw.randomize === 'boolean') ? raw.randomize : true;
                 if (!_tikAds.length) throw new Error('empty');
-                _tikIdx = Math.floor(Math.random() * _tikAds.length);
+                _tikIdx = _tikRandomize ? Math.floor(Math.random() * _tikAds.length) : 0;
                 renderAllTikSlots();
                 setInterval(() => {
-                    _tikIdx = Math.floor(Math.random() * _tikAds.length);
+                    _tikIdx = _tikRandomize ? Math.floor(Math.random() * _tikAds.length) : (_tikIdx + 1) % _tikAds.length;
                     renderAllTikSlots();
                 }, 20 * 1000);
             } catch(e) {
@@ -4271,7 +4278,11 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
                         '</td>' +
                         '<td style="padding:8px 5px;color:' + statusColor + ';">' + statusText + '</td>' +
                         '<td style="padding:8px 5px;white-space:nowrap;">' +
-                            '<button class="btn" style="padding:2px 6px;font-size:0.75em;background:#ff0050;color:#fff;border-color:#ff0050;margin-bottom:3px;" ' +
+'<button class="btn" style="padding:2px 6px;font-size:0.75em;margin-bottom:3px;" ' +
+                                                        'onclick="reorderTikTokLink(\'' + escapeHtml(item.id) + '\',\'up\')"' + (_tikIdx === 0 ? ' disabled' : '') + '>&#9650;</button><br>' +
+                                                    '<button class="btn" style="padding:2px 6px;font-size:0.75em;margin-bottom:3px;" ' +
+                                                        'onclick="reorderTikTokLink(\'' + escapeHtml(item.id) + '\',\'down\')"' + (_tikIdx === data.length - 1 ? ' disabled' : '') + '>&#9660;</button><br>' +
+                                                    '<button class="btn" style="padding:2px 6px;font-size:0.75em;background:#ff0050;color:#fff;border-color:#ff0050;margin-bottom:3px;" ' +
                                 'onclick="editTikTokLink(window._tiktokItemsList[' + _tikIdx + '])">EDIT</button><br>' +
                             '<button class="btn" style="padding:2px 6px;font-size:0.75em;margin-bottom:3px;" ' +
                                 'onclick="toggleTikTokLink(\'' + escapeHtml(item.id) + '\',' + (!item.is_active) + ')">' + (item.is_active ? 'DISABLE' : 'ACTIVATE') + '</button><br>' +
@@ -4287,7 +4298,54 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             }
         }
 
-        async function uploadTikTokImageFile(input) {
+        async function reorderTikTokLink(id, direction) {
+                            let adminToken = localStorage.getItem('token') || '';
+                            try {
+                                                    const r = await fetch('/api/admin/tiktok', {
+                                                                                method: 'POST',
+                                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + adminToken },
+                                                                                body: JSON.stringify({ action: 'reorder', id: id, direction: direction })
+                                                    });
+                                                    const d = await r.json();
+                                                    if (!r.ok || d.error) throw new Error(d.error || 'Reorder failed');
+                                                    loadTikTokLinks();
+                            } catch (e) {
+                            alert('Failed to reorder: ' + e.message);
+                            }
+        }
+        
+                    async function loadTikTokRandomizeToggle() {
+                                        const toggle = document.getElementById('tiktok-randomize-toggle');
+                                        if (!toggle) return;
+                                        let adminToken = localStorage.getItem('token') || '';
+                                        try {
+                                    const r = await fetch('/api/admin/tiktok', {
+                                                                method: 'GET',
+                                                                headers: { 'Authorization': 'Bearer ' + adminToken }
+                                    });
+                                                                const d = await r.json();
+                                                                toggle.checked = (d.randomize !== false);
+                                        } catch (e) {
+                                    console.warn('tiktok randomize toggle load:', e.message);
+                                        }
+                    }
+        
+                    async function toggleTikTokRandomize(checked) {
+                                        let adminToken = localStorage.getItem('token') || '';
+                                        try {
+                                                                const r = await fetch('/api/admin/tiktok', {
+                                                                                            method: 'POST',
+                                                                                            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + adminToken },
+                                                                                            body: JSON.stringify({ action: 'set_randomize', value: checked })
+                                                                    });
+                                                                const d = await r.json();
+                                                                if (!r.ok || d.error) throw new Error(d.error || 'Save failed');
+                                        } catch (e) {
+                                                                alert('Failed to save randomize setting: ' + e.message);
+                                        }
+                    }
+        
+                    async function uploadTikTokImageFile(input) {
             const files = Array.from(input.files);
             if (!files.length) return;
             const status  = document.getElementById('tk-img-upload-status');
