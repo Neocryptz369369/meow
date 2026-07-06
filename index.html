@@ -4319,7 +4319,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
                                         if (!toggle) return;
                                         let adminToken = localStorage.getItem('token') || '';
                                         try {
-                                    const r = await fetch('/api/admin/tiktok', {
+                                    const r = await fetch('/api/recommendations/active', {
                                                                 method: 'GET',
                                                                 headers: { 'Authorization': 'Bearer ' + adminToken }
                                     });
