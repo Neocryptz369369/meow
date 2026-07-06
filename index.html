@@ -555,7 +555,7 @@
             stored.count += 1;
             localStorage.setItem('imageGenStats', JSON.stringify(stored));
 
-            // Generate image URL via Vercel Secure Endpoint
+            // Generate image URL via Pollinations Secure Endpoint
             let url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
             try {
                 let keysPayload = {};
@@ -699,7 +699,7 @@
             const body = encodeURIComponent(
                 `Hi ${buyerName},\n\nThank you for your purchase! Here is your Neocryptz AI Gift Subscription code:\n\n  ${code}\n\n` +
                 `To redeem it:\n` +
-                `1. Go to https://neocryptz-ai.vercel.app\n` +
+                `1. Go to https://neocryptzai.com\n` +
                 `2. Click REGISTER\n` +
                 `3. Fill in your details and enter the code in the "Gift Subscription Code" field\n` +
                 `4. Your 1-Year Unlimited plan will be activated immediately!\n\n` +
@@ -1265,7 +1265,7 @@
             <h2 style="color: var(--primary);">SHARE NEOCRYPTZ AI</h2>
             <div style="margin: 20px 0; padding: 15px; border: 1px solid #333; background: rgba(0,0,0,0.5); font-size: 0.9em; color: #fff; text-align: left;">
                 Check out Neocryptz AI I'm only letting 25 people in today. You can pay $20 month-to-month, or lock in your spot for a full year for $240 for unlimited AI so you never have to worry about price increases when I expand the server later. Limit 40 questions a day.<br><br>
-                <a href="https://neocryptz-ai.vercel.app/" style="color: var(--secondary); text-decoration: none;">https://neocryptz-ai.vercel.app/</a>
+                <a href="https://neocryptzai.com/" style="color: var(--secondary); text-decoration: none;">https://neocryptzai.com/</a>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
@@ -2758,7 +2758,7 @@ for (let i = 0; i < localStorage.length; i++) {
                         chat.scrollTop = chat.scrollHeight;
                     }
 
-                    // ── Vercel deploy poller (via GitHub commit statuses) ────
+                    // ── Cloudflare deploy poller (via GitHub commit statuses) ────
                     async function _waitDeploy(repo, sha, stepId) {
                         for (let i = 0; i < 24; i++) {
                             await new Promise(r => setTimeout(r, 5000));
@@ -2770,8 +2770,8 @@ for (let i = 0; i < localStorage.length; i++) {
                                 const d = await r.json();
                                 const secs = (i + 1) * 5;
                                 if (d.state === 'success') return { ok: true, elapsed: secs, url: d.url };
-                                if (d.state === 'failure' || d.state === 'error') return { ok: false, error: d.description || 'Vercel build failed' };
-                                _setStep(stepId, 'active', `Vercel building... (${secs}s elapsed)`);
+                                if (d.state === 'failure' || d.state === 'error') return { ok: false, error: d.description || 'Cloudflare build failed' };
+                                _setStep(stepId, 'active', `Cloudflare building... (${secs}s elapsed)`);
                             } catch(_) {}
                         }
                         return { ok: false, error: 'Deploy check timed out — site should be live shortly.' };
@@ -2864,10 +2864,10 @@ for (let i = 0; i < localStorage.length; i++) {
                                 if (!eD2.success) { _setStep('p3','error', eD2.error || 'Push failed'); _stopAll(); return; }
                                 _setStep('p3', 'done', `Pushed to GitHub ✓  (commit: ${eD2.commit?.slice(0,7)})`);
 
-                                _step('p4', 'Waiting for Vercel to build and deploy...', 'active');
+                                _step('p4', 'Waiting for Cloudflare to build and deploy...', 'active');
                                 const dep = await _waitDeploy(a2.repo, eD2.commit, 'p4');
                                 if (dep.ok) {
-                                    _setStep('p4', 'done', `Vercel deployed in ${dep.elapsed}s ✓`);
+                                    _setStep('p4', 'done', `Cloudflare deployed in ${dep.elapsed}s ✓`);
                                     _step('p5', '🚀  CHANGES ARE LIVE — your site has been updated!', 'done');
                                     if (dep.url) _showSitePreview(dep.url, a2.repo);
                                 } else {
@@ -2917,10 +2917,10 @@ for (let i = 0; i < localStorage.length; i++) {
                             await new Promise(r => setTimeout(r, 200));
                             _setStep('d3', 'done', `Pushed to GitHub ✓  (commit: ${eD.commit?.slice(0,7)})`);
 
-                            _step('d4', 'Waiting for Vercel to build and deploy...', 'active');
+                            _step('d4', 'Waiting for Cloudflare to build and deploy...', 'active');
                             const dep = await _waitDeploy(actionJson.repo, eD.commit, 'd4');
                             if (dep.ok) {
-                                _setStep('d4', 'done', `Vercel deployed in ${dep.elapsed}s ✓`);
+                                _setStep('d4', 'done', `Cloudflare deployed in ${dep.elapsed}s ✓`);
                                 _step('d5', '🚀  CHANGES ARE LIVE — your site has been updated!', 'done');
                                 if (dep.url) _showSitePreview(dep.url, actionJson.repo);
                             } else {
@@ -4518,7 +4518,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
 
         function shareTo(platform) {
             const shareText = "Check out Neocryptz AI I'm only letting 25 people in today. You can pay $20 month-to-month, or lock in your spot for a full year for $240 for unlimited AI so you never have to worry about price increases when I expand the server later. Limit 40 questions a day.";
-            const shareUrl = "https://neocryptz-ai.vercel.app/";
+                            const shareUrl = "https://neocryptzai.com/";
             const fullText = `${shareText} ${shareUrl}`;
 
             if (platform === 'copy') {
