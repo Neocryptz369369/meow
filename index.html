@@ -2856,9 +2856,9 @@ for (let i = 0; i < localStorage.length; i++) {
                                     appendMessage('assistant', 'No problem — I didn\'t push anything. Let me know if you\'d like to try a different change.');
                                     return;
                                 }
-                                const eR2 = await fetch('/api/execute', {
-                                    method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${currentToken}`},
-                                    body: JSON.stringify(a2)
+                                const eR2 = await fetch('/api/push', {
+                                    method:'POST', headers:{'Content-Type':'application/json'},
+                                                    body: JSON.stringify({ ...a2, username: currentUser?.username || 'Unknown' })
                                 });
                                 const eD2 = await eR2.json();
                                 if (!eD2.success) { _setStep('p3','error', eD2.error || 'Push failed'); _stopAll(); return; }
@@ -2891,9 +2891,9 @@ for (let i = 0; i < localStorage.length; i++) {
                                 return;
                             }
 
-                            const eR = await fetch('/api/execute', {
-                                method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${currentToken}`},
-                                body: JSON.stringify(actionJson)
+                            const eR = await fetch('/api/push', {
+                                method:'POST', headers:{'Content-Type':'application/json'},
+                                                body: JSON.stringify({ ...actionJson, username: currentUser?.username || 'Unknown' })
                             });
                             const eD = await eR.json();
 
