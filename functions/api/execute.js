@@ -35,7 +35,7 @@ export async function onRequestPost(context) {
           return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-  const { action, repo, path, inject, position, content, message, find, replace } = body || {};
+  const { action, repo, path, inject, position, content, message, find, replace, url } = body || {};
 
   const ghHeaders = {
         'Authorization': `Bearer ${token}`,
@@ -190,9 +190,32 @@ export async function onRequestPost(context) {
                         return Response.json({ error: deployData.errors?.[0]?.message || 'Cloudflare redeploy failed.' }, { status: 500 });
         }
       
-      return Response.json({ error: 'Unknown action: ' + action }, { status: 400 });
+              if (action === 'browse_page') {
+                              const cfToken = env.CF_API_TOKEN;
+                              if (!cfToken) return Response.json({ error: 'CF_API_TOKEN not configured on server.' }, { status: 500 });
+                              if (!url) return Response.json({ error: 'Missing url.' }, { status: 400 });
+                              const browseRes = await fetch('https://api.cloudflare.com/client/v4/accounts/35078329dfee4f3908f4b41ccde638a9/browser-rendering/markdown', {
+                                                  method: 'POST',
+                                                  headers: { 'Authorization': `Bearer ${cfToken}`, 'Content-Type': 'application/json' },
+                                                  body: JSON.stringify({ url })
+                              });
+                              const browseData = await browseRes.json();
+                              if (browseData.success !== false && browseData.result) {
+                                                  return Response.json({
+                                                                          success: true,
+                                                                          action: 'browse_page',
+                                                                          url,
+                                                                          content: String(browseData.result).slice(0, 8000),
+                                                                          message: `Read ${url}`
+                                                  });
+                              }
+                              return Response.json({ error: browseData.errors?.[0]?.message || 'Failed to browse page.' }, { status: 500 });
+              }
+
+              return Response.json({ error: 'Unknown action: ' + action }, { status: 400 });
 
   } catch (err) {
         return Response.json({ error: 'Execution error: ' + err.message }, { status: 500 });
   }
 }
+} 
