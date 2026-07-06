@@ -2231,19 +2231,7 @@
                 newUserNotifs.push({ username, email: validEmail, full_name: fullName, phone, plan: giftPlanUpgrade || 'Free', timestamp: new Date().toISOString(), seen: false });
                 localStorage.setItem('newUserNotifications', JSON.stringify(newUserNotifs));
 
-                // Remember all registration info so the form never needs to be filled again
-                localStorage.setItem('rememberedUsername', username);
-                localStorage.setItem('rememberedPass', pass);
-                localStorage.setItem('rememberedRegData', JSON.stringify({
-                    username, email: document.getElementById('reg-email')?.value || '',
-                    name: fullName,
-                    address: document.getElementById('reg-address')?.value || '',
-                    city: document.getElementById('reg-city')?.value || '',
-                    state: document.getElementById('reg-state')?.value || '',
-                    zip: document.getElementById('reg-zip')?.value || '',
-                    phone, age
-                }));
-
+                
                 // Save registration info to Supabase immediately so admin can always see it
                 try {
                     // Generate or reuse a stable UUID for this user
@@ -3309,10 +3297,10 @@ for (let i = 0; i < localStorage.length; i++) {
 
             // Auto-fill registration form from saved data
             if (r.style.display === 'flex') {
-                const saved = JSON.parse(localStorage.getItem('rememberedRegData') || '{}');
+                const saved = {};
                 if (saved.username) { const el = document.getElementById('reg-user'); if (el) el.value = saved.username; }
                 if (saved.email)    { const el = document.getElementById('reg-email'); if (el) el.value = saved.email; }
-                const savedPass = localStorage.getItem('rememberedPass');
+                const savedPass = null;
                 if (savedPass)      { const el = document.getElementById('reg-pass'); if (el) el.value = savedPass; }
                 if (saved.name)     { const el = document.getElementById('reg-name'); if (el) el.value = saved.name; }
                 if (saved.address)  { const el = document.getElementById('reg-address'); if (el) el.value = saved.address; }
@@ -5060,8 +5048,8 @@ const WATERFALL_PROVIDERS = { openrouter: { label: 'OpenRouter', envKey: 'OPENRO
 
         // Auto-fill login form from saved credentials
         (function autoFillLogin() {
-            const savedUser = localStorage.getItem('rememberedUsername');
-            const savedPass = localStorage.getItem('rememberedPass');
+            const savedUser = null;
+            const savedPass = null;
             const userEl = document.getElementById('login-user');
             const passEl = document.getElementById('login-pass');
             if (userEl && savedUser) userEl.value = savedUser;
