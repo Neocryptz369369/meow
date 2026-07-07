@@ -110,11 +110,9 @@ module.exports = async (req, res) => {
           return;
     }
 
-    const STEEL_API_KEY = process.env.STEEL_API_KEY;
     const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
     const CF_API_TOKEN = process.env.CF_API_TOKEN;
 
-    if (!STEEL_API_KEY) { res.status(500).json({ error: 'STEEL_API_KEY not configured on server.' }); return; }
     if (!CF_ACCOUNT_ID) { res.status(500).json({ error: 'CF_ACCOUNT_ID not configured on server.' }); return; }
     if (!CF_API_TOKEN) { res.status(500).json({ error: 'CF_API_TOKEN not configured on server.' }); return; }
 
@@ -137,22 +135,8 @@ module.exports = async (req, res) => {
     let awaitingUser = false;
 
     try {
-          const createResp = await fetch('https://api.steel.dev/v1/sessions', {
-                  method: 'POST',
-                  headers: {
-                            'steel-api-key': STEEL_API_KEY,
-                            'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({})
-          });
-          const session = await createResp.json();
-          if (!session || !session.id) {
-                  throw new Error('Failed to create Steel session: ' + JSON.stringify(session));
-          }
-          sessionId = session.id;
-
-      const wsUrl = 'wss://connect.steel.dev?apiKey=' + encodeURIComponent(STEEL_API_KEY) + '&sessionId=' + encodeURIComponent(sessionId);
-          browser = await chromium.connectOverCDP(wsUrl);
+                  const wsUrl = 'wss://api.cloudflare.com/client/v4/accounts/' + CF_ACCOUNT_ID + '/browser-rendering/devtools/browser?keep_alive=600000';
+                browser = await chromium.connectOverCDP(wsUrl, { headers: { Authorization: 'Bearer ' + CF_API_TOKEN } });
           const context = browser.contexts()[0] || (await browser.newContext());
           const page = context.pages()[0] || (await context.newPage());
           await page.setViewportSize({ width: WIDTH, height: HEIGHT });
@@ -247,13 +231,5 @@ module.exports = async (req, res) => {
           res.status(500).json({ error: err && err.message ? err.message : String(err) });
     } finally {
           try { if (browser) await browser.close(); } catch (e) {}
-          try {
-                  if (sessionId) {
-                            await fetch('https://api.steel.dev/v1/sessions/' + sessionId + '/release', {
-                                        method: 'POST',
-                                        headers: { 'steel-api-key': STEEL_API_KEY }
-                            });
-                  }
-          } catch (e) {}
     }
 };
