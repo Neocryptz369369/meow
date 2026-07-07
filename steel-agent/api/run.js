@@ -242,7 +242,7 @@ module.exports = async (req, res) => {
               finalMessage = 'Stopped after reaching the maximum number of steps (' + MAX_STEPS + ') without an explicit completion.';
       }
 
-      res.status(200).json({ ok: true, steps: steps, stepCount: steps.length, finalMessage: finalMessage, awaitingUser: awaitingUser });
+      res.status(200).json({ ok: true, steps: steps, frames: steps.map(function(s){ return { label: s.narration, image: s.image }; }), stepCount: steps.length, finalMessage: finalMessage, summary: finalMessage, awaitingUser: awaitingUser });
     } catch (err) {
           res.status(500).json({ error: err && err.message ? err.message : String(err) });
     } finally {
