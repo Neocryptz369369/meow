@@ -226,7 +226,7 @@ export async function onRequestPost(context) {
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 `;
 
   try {
-        const res = await fetch(`https://production-sfo.browserless.io/function?token=${browserlessKey}&timeout=180000`, {
+        const res = await fetch(`https://production-sfo.browserless.io/function?token=${browserlessKey}&timeout=60000`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/javascript' },
                 body: puppeteerScript
