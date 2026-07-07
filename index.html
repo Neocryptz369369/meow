@@ -6210,10 +6210,10 @@ const WATERFALL_PROVIDERS = { openrouter: { label: 'OpenRouter', envKey: 'OPENRO
 
         try {
             statusLb.textContent = '⠹ Connecting browser and navigating...';
-            const runRes = await fetch('/api/browser-run', {
+            const runRes = await fetch('/api/agent', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                body: JSON.stringify({ url: req.url, task: req.task || '' })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ startUrl: req.url, task: req.task || '' })
             });
             const d = await runRes.json();
             clearInterval(lmTimer);
