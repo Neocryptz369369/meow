@@ -6,6 +6,7 @@
 //
 // The whole loop runs inside a single Browserless `/function` call so the same
 // Puppeteer `page` (and browser session) stays alive across every step.
+// redeploy-trigger: 2026-07-06 (ANTHROPIC_API_KEY secret added, forcing fresh deployment)
 
 export async function onRequestPost(context) {
     const request = context.request;
