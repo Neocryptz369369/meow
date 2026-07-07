@@ -1,0 +1,9 @@
+{
+    "name": "neocryptz-steel-agent",
+    "version": "1.0.0",
+    "private": true,
+    "engines": { "node": ">=18" },
+    "dependencies": {
+          "playwright-core": "^1.46.0"
+    }
+}
