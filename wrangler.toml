@@ -1,0 +1,7 @@
+name = "meow"
+main = "src/index.js"
+compatibility_date = "2026-07-08"
+compatibility_flags = [ "nodejs_compat" ]
+
+[browser]
+binding = "BROWSER"

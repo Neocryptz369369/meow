@@ -1,15 +1,9 @@
 {
-  "name": "neocryptz-ai",
+  "name": "meow",
   "version": "1.0.0",
-  "type": "commonjs",
-  "scripts": {
-    "start": "node agent.js",
-    "dev": "node agent.js"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.108.2",
-    "browser-use-sdk": "^3.8.1",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+  "type": "module",
+  "devDependencies": {
+    "@cloudflare/puppeteer": "^0.0.13",
+    "wrangler": "^4.107.1"
   }
 }
