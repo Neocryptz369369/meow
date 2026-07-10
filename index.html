@@ -1755,10 +1755,6 @@
         let session_id = uuidv4();
         let token = localStorage.getItem('token');
 
-        // ── Adsterra Direct Link ──────────────────────────────────────────────
-        // Paste your Adsterra Direct Link URL below (from publisher dashboard → ad unit → Direct Link)
-        const ADSTERRA_DIRECT_LINK = 'DISABLED'; // SSL broken on Smartlink domain — swap for Popunder script
-        // ─────────────────────────────────────────────────────────────────────
 
         function uuidv4() { return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)); }
 
@@ -6601,11 +6597,9 @@ const WATERFALL_PROVIDERS = { openrouter: { label: 'OpenRouter', envKey: 'OPENRO
     </div>
 </div>
 
-<!-- Adsterra Popunder Ad Unit -->
-<script src="https://pl29897653.effectivecpmnetwork.com/be/dd/6d/bedd6deb50d379ce6fda7c3a6b6ce620.js"></script>
 
 <script>
-// ── Watch Ad → Earn Credits (Adsterra) ───────────────────────────────────────
+// ── Watch Ad → Earn Credits (TikTok) ───────────────────────────────────────
 
 let adCooldownTimer = null;
 
@@ -6640,10 +6634,6 @@ async function watchAdForCredits() {
         slot.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#555;font-size:0.75em;">No TikTok ad configured</div>';
     }
 
-    // Open Adsterra ad in new tab
-    if (typeof ADSTERRA_DIRECT_LINK !== 'undefined' && ADSTERRA_DIRECT_LINK && ADSTERRA_DIRECT_LINK !== 'YOUR_ADSTERRA_DIRECT_LINK_URL' && ADSTERRA_DIRECT_LINK !== 'DISABLED') {
-        try { window.open(ADSTERRA_DIRECT_LINK, '_blank', 'noopener'); } catch(e) {}
-    }
 
     const modal = document.getElementById('watch-ad-modal');
     const countdownEl = document.getElementById('ad-countdown');
