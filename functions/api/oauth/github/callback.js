@@ -44,9 +44,12 @@ export async function onRequestGet(context) {
             body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code, redirect_uri: baseUrl + '/api/oauth/github/callback' })
         });
         const tokenData = await tokenRes.json();
-        if (!tokenData.access_token) return Response.redirect(baseUrl + '/?oauth_error=github_token_failed', 302);
-        const userRes = await fetch('https://api.github.com/user', {
-            headers: { 'Authorization': 'Bearer ' + tokenData.access_token, 'Accept': 'application/vnd.github+json', 'User-Agent': 'neocryptz-app' }
+            if (!tokenData.access_token) {
+                  const d = encodeURIComponent(tokenData.error || 'no_token');
+                  return Response.redirect(baseUrl + '/?oauth_error=github_token_failed&detail=' + d, 302);
+            }
+            const userRes = await fetch('https://api.github.com/user', {
+                headers: { 'Authorization': 'Bearer ' + tokenData.access_token, 'Accept': 'application/vnd.github+json', 'User-Agent': 'neocryptz-app' }
         });
         const ghUser = await userRes.json();
         const encryptedToken = await encrypt(tokenData.access_token, encSecret);
