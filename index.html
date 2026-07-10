@@ -6881,6 +6881,25 @@ async function _runAgentOverLogo(url, task) {
         <button onclick="document.getElementById('features-modal').style.display='none'" style="margin-top:16px;width:100%;padding:10px;background:#00ffff;color:#000;border:none;border-radius:8px;font-family:monospace;font-weight:bold;cursor:pointer;letter-spacing:1px;">CLOSE</button>
       </div>
     </div>
+<!-- Connect GitHub button -->
+<div id="gh-connect-wrap" style="position:fixed;bottom:16px;left:16px;z-index:99998;">
+  <a id="gh-connect-btn" href="/api/oauth/github/authorize" style="display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:#111;color:#fff;border:1px solid #ff00ff;border-radius:10px;font-family:monospace;font-size:0.85em;text-decoration:none;box-shadow:0 0 18px rgba(255,0,255,0.25);">
+      <svg height="18" viewBox="0 0 16 16" width="18" fill="#fff"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
+      Connect GitHub
+  </a>
+</div>
+<script>
+(function(){
+      try {
+              var p = new URLSearchParams(location.search);
+              if (p.get('oauth_connected') === 'github') { localStorage.setItem('gh_connected','1'); }
+                      if (localStorage.getItem('gh_connected') === '1') {
+                                var b = document.getElementById('gh-connect-btn');
+                                if (b) { b.textContent = '\u2705 GitHub Connected'; b.removeAttribute('href'); b.style.cursor='default'; b.style.borderColor='#00ff88'; }
+                      }
+      } catch(e){}
+})();
+</script>
 </body>
 </html>
 <script async data-explicit-opt-in="true" data-deployment-id="dpl_AVdUybesgSfRoXJCpSyoY8CvpBMe" src="https://vercel.live/_next-live/feedback/feedback.js"></script>
