@@ -1,4 +1,4 @@
-# Start here
+# Start here (redeploy trigger)
 
 This is everything I've actually built or fixed across our conversation,
 already arranged into the folders your new repo needs. It is NOT your whole
