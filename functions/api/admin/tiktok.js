@@ -129,7 +129,7 @@ export async function onRequest(context) {
 
                     const idx = list.findIndex(item => item.id === id);
                             if (idx === -1) return Response.json({ error: 'Ad not found' }, { status: 404 });
-                            const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+                            const swapIdx = (direction === 'up' ? idx - 1 + list.length : idx + 1) % list.length;
                             if (swapIdx < 0 || swapIdx >= list.length) return Response.json({ ok: true, unchanged: true });
 
                     const a = list[idx];
