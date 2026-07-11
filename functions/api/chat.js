@@ -97,7 +97,7 @@ export async function onRequestPost(context) {
 
   const providerOrder = keys && keys.PROVIDER_ORDER
     ? keys.PROVIDER_ORDER.split(',').map(p => p.trim().toLowerCase())
-    : ['openrouter', 'gemini', 'sambanova', 'pollinations'];
+    : ['groq', 'openrouter', 'gemini', 'sambanova', 'pollinations'];
 
   const systemKeys = {
     GOOGLE_API_KEY: env.GOOGLE_API_KEY || '',
@@ -290,6 +290,34 @@ Not every message is a task. If the user sends something short and conversationa
 
   for (const provider of providerOrder) {
     try {
+      if (provider === 'groq' && activeKeys.GROQ_API_KEY) {
+        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${activeKeys.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: [{ role: 'system', content: systemPrompt }, ...formattedHistory, { role: 'user', content: prompt }]
+          })
+        });
+        if (groqRes.ok) {
+          const data = await groqRes.json();
+          if (data.choices?.[0]?.message) {
+            let text = data.choices[0].message.content;
+            text = normalizeProviderText(text);
+            if (isFakeAuthClaim(text) || (looksLikeActionRequest(prompt) && !hasRealAction(text))) {
+              lastError += 'Groq claimed action without a real EXEC block | ';
+            } else {
+              const { text: cleanText, browserRequest } = extractBrowserBlock(text);
+              await upsertCache(supabaseUrl, supabaseKey, prompt, cleanText);
+              saveHistory(supabaseUrl, supabaseKey, username, prompt, cleanText);
+              return Response.json({ result: cleanText, browserRequest, provider: 'Groq' });
+            }
+          }
+        } else {
+          lastError += 'Groq Error: ' + groqRes.statusText + ' | ';
+        }
+      }
+
       if (provider === 'openrouter' && activeKeys.OPENROUTER_API_KEY) {
         const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
