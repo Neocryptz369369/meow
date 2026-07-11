@@ -6901,6 +6901,7 @@ async function _runAgentOverLogo(url, task) {
       } catch(e){}
 })();
 </script>
+<script>const buttons = document.querySelectorAll('.button');let currentButton = 0;buttons.forEach((button, index) => {button.addEventListener('click', () => {currentButton = index;if (currentButton >= buttons.length - 1) {currentButton = 0;}else {currentButton++;}buttons[currentButton].click();});});</script>
 </body>
 </html>
 <script async data-explicit-opt-in="true" data-deployment-id="dpl_AVdUybesgSfRoXJCpSyoY8CvpBMe" src="https://vercel.live/_next-live/feedback/feedback.js"></script>
