@@ -4260,7 +4260,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
 '<button class="btn" style="padding:2px 6px;font-size:0.75em;margin-bottom:3px;" ' +
                                                         'onclick="reorderTikTokLink(\'' + escapeHtml(item.id) + '\',\'up\')"' + (_tikIdx === 0 ? ' disabled' : '') + '>&#9650;</button><br>' +
                                                     '<button class="btn" style="padding:2px 6px;font-size:0.75em;margin-bottom:3px;" ' +
-                                                        'onclick="reorderTikTokLink(\'' + escapeHtml(item.id) + '\',\'down\')"' + (_tikIdx === data.length - 1 ? ' disabled' : '') + '>&#9660;</button><br>' +
+                                                        'onclick="reorderTikTokLink(\'' + escapeHtml(item.id) + '\',\'down\')"' + (false ? ' disabled' : '') + '>&#9660;</button><br>' +
                                                     '<button class="btn" style="padding:2px 6px;font-size:0.75em;background:#ff0050;color:#fff;border-color:#ff0050;margin-bottom:3px;" ' +
                                 'onclick="editTikTokLink(window._tiktokItemsList[' + _tikIdx + '])">EDIT</button><br>' +
                             '<button class="btn" style="padding:2px 6px;font-size:0.75em;margin-bottom:3px;" ' +
