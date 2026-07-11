@@ -1114,7 +1114,7 @@
         <div id="char-counter" style="position: absolute; right: 25px; bottom: 80px; font-size: 0.8em; color: #aaa; background: #111; padding: 2px 5px; border-radius: 3px; border: 1px solid #333;">0 / 300 Chars</div>
         <div id="input-area" class="neon-border" style="flex-direction: column; gap: 10px; align-items: stretch;">
             <div style="display: flex; width: 100%; justify-content: center; align-items: center;">
-                <input type="text" id="message-input" class="neon-border" placeholder="Enter command or question (40 words max)..." onkeypress="if(event.key==='Enter') sendMessage()">
+                <input type="text" id="message-input" class="neon-border" placeholder="Enter command or question..." onkeypress="if(event.key==='Enter') sendMessage()">
                 <button id="mic-btn" onclick="toggleVoiceInput()" style="background: none; border: none; font-size: 1.5em; cursor: pointer; color: var(--primary);">🎤</button>
                 <button id="send-btn" onclick="sendMessage()">EXECUTE</button>
             </div>
