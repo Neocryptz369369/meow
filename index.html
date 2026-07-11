@@ -2462,7 +2462,7 @@
             // Enforce 50 word limit for user inputs
             const wordCount = msg.split(/\s+/).length;
             const myUsernameLimitCheck = currentUser?.username || 'Unknown';
-            if (myUsernameLimitCheck.toLowerCase() !== 'neocryptz' && wordCount > 40) {
+            if (myUsernameLimitCheck.toLowerCase() !== 'neocryptz' && false) {
                 alert("Please keep your questions brief (40 words or less). Your message is currently " + wordCount + " words.");
                 return;
             }
