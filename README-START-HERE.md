@@ -83,3 +83,4 @@ covers what they need — it's already in `package.json` above.
 4. Whenever you're ready, not urgent today: a Row Level Security policy on
    the `support_messages` table in Supabase, as a second layer of protection
    on top of what `users.js` already does.
+.
