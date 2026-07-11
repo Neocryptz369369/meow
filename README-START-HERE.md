@@ -84,3 +84,4 @@ covers what they need — it's already in `package.json` above.
    the `support_messages` table in Supabase, as a second layer of protection
    on top of what `users.js` already does.
 .
+.
