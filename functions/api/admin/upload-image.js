@@ -54,7 +54,7 @@ export async function onRequestPost(context) {
         const ext = (fileName || 'image.jpg').split('.').pop().toLowerCase();
         const safeName = `tiktok-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
         const filePath = `tiktok-ads/${safeName}`;
-        const bucket = 'product-images';
+        const bucket = 'tiktok-meta';
 
       // Upload via Supabase Storage REST API
       const uploadRes = await fetch(`${supabaseUrl}/storage/v1/object/${bucket}/${filePath}`, {
