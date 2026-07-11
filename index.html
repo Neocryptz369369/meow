@@ -3422,7 +3422,7 @@ for (let i = 0; i < localStorage.length; i++) {
             }
         }
 
-        function promptAuthToken(provider) {
+        function promptAuthToken(provider) { return;
             const tokenInput = prompt(`Enter Manual Auth Token for ${provider}:`);
             if (tokenInput) {
                 localStorage.setItem(`authToken_${provider}`, tokenInput);
