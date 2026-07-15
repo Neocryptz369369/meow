@@ -502,7 +502,7 @@
 
         function generateEmbedCode() {
             if (!currentUser) return;
-            const code = `<iframe src="https://${window.location.host}/?embed=${currentUser.username}" width="350" height="500" style="border:1px solid #ff00ff; border-radius:10px; box-shadow:0 0 10px #00ffff;"></iframe>`;
+            const code = `<iframe src="https://${window.location.host}/?embed=${currentUser.username}" width="1024" height="1024" style="border:1px solid #ff00ff; border-radius:10px; box-shadow:0 0 10px #00ffff;"></iframe>`;
             document.getElementById('embed-code').value = code;
         }
 
