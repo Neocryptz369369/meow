@@ -2447,6 +2447,7 @@
             micBtn.disabled = true;
 
             let countdown = (myUsername === 'Neocryptz') ? 0 : 60;
+            if (typeof currentUser !== 'undefined' && currentUser && currentUser.is_admin) { countdown = 0; }
             if (countdown === 0) {
                 btn.disabled = false;
                 input.disabled = false;
