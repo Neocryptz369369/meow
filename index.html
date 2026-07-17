@@ -4,14 +4,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="google-adsense-account" content="ca-pub-5017188678144132">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>NEOCRYPTZ AI // CLOUD OS V4.2.0</title>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5017188678144132" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════════════
@@ -819,7 +817,6 @@
 .ad-box.neon-border { background:transparent !important; }
 .ad-box a, .ad-box a img { pointer-events:auto !important; position:relative; z-index:1; }
 .ad-box iframe { pointer-events:auto !important; border:none; width:100% !important; height:100% !important; display:block; position:relative; z-index:1; }
-.ad-box ins.adsbygoogle { display:block !important; width:100% !important; height:100% !important; min-height:170px; position:relative; z-index:1; }
 
         /* Mobile hamburger button */
         #mobile-menu-btn { display: none; position: fixed; top: 12px; left: 12px; z-index: 1500; background: #111; border: 1px solid var(--primary); color: var(--primary); font-size: 1.4em; padding: 4px 10px; cursor: pointer; border-radius: 3px; }
@@ -897,11 +894,9 @@
         [id^="sidebar-tiktok-slot"] a, [id^="sidebar-tiktok-slot"] img { position:absolute; inset:0; display:block; width:100%; height:100%; object-fit:cover; }
 
         /* Clickability — targeted, no broad wildcard */
-        .ad-box.neon-border a, .ad-box.neon-border div, .ad-box.neon-border iframe, .ad-box.neon-border ins.adsbygoogle { pointer-events:auto; }
         [id^="sidebar-tiktok-slot"], [id^="sidebar-tiktok-slot"] * { pointer-events:auto; }
 
         /* AdSense <ins> — clean sizing, no z-index gymnastics */
-        ins.adsbygoogle { display:block !important; width:100% !important; height:170px !important; }
 
         .provider-btn { position: relative; }
         .provider-btn.authorized::after {
@@ -1748,8 +1743,6 @@
         let session_id = uuidv4();
         let token = localStorage.getItem('token');
 
-        // ── Adsterra Direct Link ──────────────────────────────────────────────
-        // Paste your Adsterra Direct Link URL below (from publisher dashboard → ad unit → Direct Link)
         const ADSTERRA_DIRECT_LINK = 'DISABLED'; // SSL broken on Smartlink domain — swap for Popunder script
         // ─────────────────────────────────────────────────────────────────────
 
@@ -6225,11 +6218,9 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
     </div>
 </div>
 
-<!-- Adsterra Popunder Ad Unit -->
 <script src="https://pl29897653.effectivecpmnetwork.com/be/dd/6d/bedd6deb50d379ce6fda7c3a6b6ce620.js"></script>
 
 <script>
-// ── Watch Ad → Earn Credits (Adsterra) ───────────────────────────────────────
 
 let adCooldownTimer = null;
 
@@ -6264,7 +6255,6 @@ async function watchAdForCredits() {
         slot.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#555;font-size:0.75em;">No TikTok ad configured</div>';
     }
 
-    // Open Adsterra ad in new tab
     if (typeof ADSTERRA_DIRECT_LINK !== 'undefined' && ADSTERRA_DIRECT_LINK && ADSTERRA_DIRECT_LINK !== 'YOUR_ADSTERRA_DIRECT_LINK_URL' && ADSTERRA_DIRECT_LINK !== 'DISABLED') {
         try { window.open(ADSTERRA_DIRECT_LINK, '_blank', 'noopener'); } catch(e) {}
     }
