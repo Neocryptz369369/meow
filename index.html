@@ -1149,7 +1149,8 @@
                 <button id="mic-btn" onclick="toggleVoiceInput()" style="background: none; border: none; font-size: 1.5em; cursor: pointer; color: var(--primary);">🎤</button>
                 <button id="send-btn" onclick="sendMessage()">EXECUTE</button>
             </div>
-            <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+            <button class="btn neon-border" onclick="var t=document.getElementById('tools-tray');t.style.display=(t.style.display==='none'?'flex':'none');" title="Show tools" style="display:block;margin:0 auto 10px;">🛠️ Tools</button>
+            <div id="tools-tray" style="display: none; justify-content: center; gap: 10px; flex-wrap: wrap;">
                 <button class="btn neon-border" onclick="document.getElementById('smart-paste-modal').style.display='flex'" title="Smart Paste Cleaner">📋 Clean Paste</button>
                 <button class="btn neon-border" onclick="document.getElementById('polisher-modal').style.display='flex'" title="Grammar Polisher">✍️ Polish Text</button>
                 <button class="btn neon-border" onclick="document.getElementById('canvas-modal').style.display='flex'" title="Prompt Canvas">📝 Blueprint Canvas</button>
