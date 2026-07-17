@@ -6225,6 +6225,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
 let adCooldownTimer = null;
 
 async function watchAdForCredits() {
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.is_admin) { showAdMessage('\u2705 Admins have unlimited questions \u2014 no need to watch ads.', '#00ff88'); return; }
     const authToken = localStorage.getItem('token');
     if (!currentUser) { showAdMessage('⚠️ Please log in to earn credits.', '#ffaa00'); return; }
     if (!authToken) { showAdMessage('⚠️ To earn credits via ads, please log out and log back in with your email and password.', '#ffaa00'); return; }
@@ -6361,7 +6362,7 @@ function showAdMessage(text, color) {
 }
 
 function startAdCooldown(seconds, btn) {
-    try { var _cu = JSON.parse(localStorage.getItem('currentUser')||'{}'); if (_cu && _cu.is_admin) return; } catch(e){}
+    try { if (typeof currentUser !== 'undefined' && currentUser && currentUser.is_admin) return; } catch(e){}
     if (!btn) btn = document.getElementById('watch-ad-btn');
     btn.disabled = true;
     let remaining = seconds;
@@ -6427,7 +6428,6 @@ function startAdCooldown(seconds, btn) {
         <button onclick="document.getElementById('features-modal').style.display='none'" style="margin-top:16px;width:100%;padding:10px;background:#00ffff;color:#000;border:none;border-radius:8px;font-family:monospace;font-weight:bold;cursor:pointer;letter-spacing:1px;">CLOSE</button>
       </div>
     </div>
-<div id="cloudflare-browser-rendering" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
 <script>(function(){var input=document.getElementById('message-input');var mic=document.getElementById('mic-btn');if(!input||!mic||document.getElementById('img-upload-btn'))return;var row=input.parentElement;var fileInput=document.createElement('input');fileInput.type='file';fileInput.accept='image/*';fileInput.id='img-upload-input';fileInput.style.display='none';var plus=document.createElement('button');plus.id='img-upload-btn';plus.type='button';plus.textContent='+';plus.title='Attach a picture';plus.style.cssText='background:transparent;border:2px solid #0ff;border-radius:8px;color:#0ff;font-size:20px;font-weight:bold;cursor:pointer;margin:0 6px;padding:2px 10px;box-shadow:0 0 8px #0ff;';var preview=document.createElement('div');preview.id='img-upload-preview';preview.style.cssText='display:none;align-items:center;gap:6px;margin:6px 0;';row.insertBefore(plus,mic);row.insertBefore(fileInput,mic);row.parentElement.insertBefore(preview,row);window.__attachedImage=null;plus.addEventListener('click',function(){fileInput.click();});fileInput.addEventListener('change',function(){var f=fileInput.files[0];if(!f)return;var reader=new FileReader();reader.onload=function(e){window.__attachedImage={dataUrl:e.target.result,name:f.name};preview.style.display='flex';preview.innerHTML='';var img=document.createElement('img');img.src=e.target.result;img.style.cssText='height:48px;border:2px solid #0ff;border-radius:6px;';var clr=document.createElement('button');clr.textContent='X';clr.type='button';clr.style.cssText='background:transparent;border:none;color:#f0f;cursor:pointer;font-size:14px;';clr.onclick=function(){window.__attachedImage=null;preview.style.display='none';preview.innerHTML='';fileInput.value='';};preview.appendChild(img);preview.appendChild(clr);};reader.readAsDataURL(f);});var _fetch=window.fetch.bind(window);window.fetch=function(url,opts){try{if(window.__attachedImage&&typeof url==='string'&&url.indexOf('/api/chat')!==-1&&opts&&opts.body){var b=JSON.parse(opts.body);b.image=window.__attachedImage.dataUrl;b.image_name=window.__attachedImage.name;if(typeof b.prompt==='string'){b.prompt+='\n\n[User attached an image: '+window.__attachedImage.name+']';}opts=Object.assign({},opts,{body:JSON.stringify(b)});window.__attachedImage=null;if(preview){preview.style.display='none';preview.innerHTML='';}if(fileInput)fileInput.value='';}}catch(e){}return _fetch(url,opts);};})();</script>
 <script>(function(){var origRequest=window.requestPlatformAuth;var origConfirm=window.confirmPlatformAuth;window.requestPlatformAuth=function(platform,callback){try{if(platform&&localStorage.getItem('authToken_'+platform)){if(typeof callback==='function'){return callback();}return;}}catch(e){}return origRequest.apply(this,arguments);};window.confirmPlatformAuth=function(){var platform=window._platformAuthName;var result=origConfirm.apply(this,arguments);try{if(platform&&!localStorage.getItem('authToken_'+platform)){localStorage.setItem('authToken_'+platform,'connected');localStorage.setItem('authToken_'+platform+'_at',new Date().toISOString());}}catch(e){}return result;};})();</script>
 </body>
