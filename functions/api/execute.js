@@ -1,8 +1,12 @@
 // functions/api/execute.js
 // Cloudflare Pages Function.
-// Flow: request -> Steel agent (optional) -> GitHub commit -> Cloudflare auto-deploy.
+// Flow: request -> (optional Steel agent) -> GitHub commit -> Cloudflare auto-deploy.
 // Nothing is written directly to the live site. All changes land on GitHub first,
 // where they can be reviewed and edited, and Cloudflare deploys from GitHub.
+//
+// Only an authorized caller may run this:
+//   - a request carrying the EXECUTE_SECRET, OR
+//   - a logged-in admin user (their Supabase login token is checked).
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -21,6 +25,40 @@ export async function onRequestOptions() {
   return new Response(null, { status: 204, headers: CORS });
 }
 
+// Confirm the token belongs to a real, logged-in admin user.
+async function isAdmin(token, env) {
+  const SUPABASE_URL = env.SUPABASE_URL || env.neocryptz_final_url;
+  const ANON_KEY = env.neocryptz_final_anon || env.SUPABASE_KEY;
+  if (!SUPABASE_URL || !token) return false;
+  try {
+    const uRes = await fetch(SUPABASE_URL + '/auth/v1/user', {
+      headers: { 'Authorization': 'Bearer ' + token, 'apikey': ANON_KEY }
+    });
+    if (!uRes.ok) return false;
+    const u = await uRes.json();
+    if (!u || !u.id) return false;
+    // Treat the user as admin if their profile row is flagged admin.
+    const SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_KEY;
+    if (SERVICE_KEY) {
+      const rRes = await fetch(
+        SUPABASE_URL + '/rest/v1/users?id=eq.' + encodeURIComponent(u.id) + '&select=is_admin,role,admin',
+        { headers: { 'apikey': SERVICE_KEY, 'Authorization': 'Bearer ' + SERVICE_KEY } }
+      );
+      if (rRes.ok) {
+        const rows = await rRes.json();
+        if (Array.isArray(rows) && rows.length) {
+          const r = rows[0];
+          if (r.is_admin === true || r.admin === true || r.role === 'admin') return true;
+        }
+      }
+    }
+    // If no admin flag is found, deny (safer default).
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -29,7 +67,6 @@ export async function onRequestPost(context) {
   const STEEL_URL = env.STEEL_AGENT_URL;
   const STEEL_KEY = env.STEEL_API_KEY;
 
-  // Which repo/branch GitHub commits go to (the site auto-deploys from here)
   const REPO = env.TARGET_REPO || 'Neocryptz369369/meow';
   const BRANCH = env.TARGET_BRANCH || 'main';
 
@@ -39,9 +76,15 @@ export async function onRequestPost(context) {
   if (!token) {
     return json({ success: false, error: 'Missing auth token' }, 401);
   }
-  if (EXECUTE_SECRET && token !== EXECUTE_SECRET) {
-    // If an execute secret is configured, it must match.
-    // (Session-token verification can be layered here later if desired.)
+
+  // Allow if the token is the execute secret OR a logged-in admin.
+  let authorized = false;
+  if (EXECUTE_SECRET && token === EXECUTE_SECRET) {
+    authorized = true;
+  } else {
+    authorized = await isAdmin(token, env);
+  }
+  if (!authorized) {
     return json({ success: false, error: 'Not authorized' }, 403);
   }
 
@@ -58,11 +101,7 @@ export async function onRequestPost(context) {
 
   const type = action.type || action.action || 'commit';
 
-  // ---------------------------------------------------------------
-  // MODE 1: hand the task to the Steel agent.
-  // The Steel agent performs the work and commits to GitHub itself,
-  // then returns commit info. We just forward and relay.
-  // ---------------------------------------------------------------
+  // MODE 1: hand the task to the Steel agent (it does the work, we relay the result).
   if (type === 'steel' || type === 'task' || type === 'build') {
     if (!STEEL_URL) {
       return json({ success: false, error: 'Steel agent not configured' }, 500);
@@ -86,18 +125,14 @@ export async function onRequestPost(context) {
       if (!sRes.ok) {
         return json({ success: false, error: 'Steel agent error', status: sRes.status, detail: data }, 502);
       }
-      // Relay whatever the agent returned (should include commit info)
       return json({ success: true, via: 'steel', commit: data.commit || null, result: data });
     } catch (e) {
       return json({ success: false, error: 'Steel agent unreachable', detail: String(e) }, 502);
     }
   }
 
-  // ---------------------------------------------------------------
-  // MODE 2: direct file commit to GitHub (visible/editable on GitHub
-  // first; Cloudflare auto-deploys from GitHub).
-  // action = { path, content, message?, branch? }
-  // ---------------------------------------------------------------
+  // MODE 2: direct file commit to GitHub (visible/editable on GitHub first;
+  // Cloudflare auto-deploys from GitHub). action = { path, content, message?, branch? }
   if (type === 'commit' || type === 'write' || action.path) {
     if (!GH_TOKEN) {
       return json({ success: false, error: 'GitHub token not configured' }, 500);
@@ -116,7 +151,6 @@ export async function onRequestPost(context) {
       'User-Agent': 'neocryptz-execute'
     };
 
-    // Get existing file sha (if it exists) so we can update it
     let sha = undefined;
     try {
       const getRes = await fetch(apiBase + '?ref=' + encodeURIComponent(targetBranch), { headers: ghHeaders });
@@ -126,7 +160,6 @@ export async function onRequestPost(context) {
       }
     } catch (e) { /* new file */ }
 
-    // base64-encode content (handles UTF-8)
     let b64;
     try {
       b64 = btoa(unescape(encodeURIComponent(action.content)));
