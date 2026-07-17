@@ -6361,6 +6361,7 @@ function showAdMessage(text, color) {
 }
 
 function startAdCooldown(seconds, btn) {
+    try { var _cu = JSON.parse(localStorage.getItem('currentUser')||'{}'); if (_cu && _cu.is_admin) return; } catch(e){}
     if (!btn) btn = document.getElementById('watch-ad-btn');
     btn.disabled = true;
     let remaining = seconds;
