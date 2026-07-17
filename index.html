@@ -216,6 +216,7 @@
         }
         // Show admin icon if admin
         if (parsed.is_admin) {
+          var _wb=document.getElementById('watch-ad-btn'); if(_wb){ _wb.style.display='none'; }
           var adminWrap = document.getElementById('admin-icon-wrap');
           if (adminWrap) adminWrap.style.display = 'inline-block';
         }
