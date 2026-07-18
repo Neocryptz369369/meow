@@ -2790,7 +2790,7 @@
                                 });
                                 const eD2 = await eR2.json();
                                 if (!eD2.success) { _setStep('p3','error', eD2.error || 'Push failed'); _stopAll(); return; }
-                                _setStep('p3', 'done', `Pushed to GitHub ✓  (commit: ${eD2.commit?.slice(0,7)})`);
+                                _setStep('p3', 'done', `Pushed to GitHub ✓  (commit: ${(typeof eD2.commit==='string'?eD2.commit:(eD2.commit&&eD2.commit.sha)||'').slice(0,7)})`);
 
                                 _step('p4', 'Waiting for Vercel to build and deploy...', 'active');
                                 const dep = await _waitDeploy(a2.repo, eD2.commit, 'p4');
@@ -2835,7 +2835,7 @@
 
                             _step('d3', 'Pushing to GitHub...', 'active');
                             await new Promise(r => setTimeout(r, 200));
-                            _setStep('d3', 'done', `Pushed to GitHub ✓  (commit: ${eD.commit?.slice(0,7)})`);
+                            _setStep('d3', 'done', `Pushed to GitHub ✓  (commit: ${(typeof eD.commit==='string'?eD.commit:(eD.commit&&eD.commit.sha)||'').slice(0,7)})`);
 
                             _step('d4', 'Waiting for Vercel to build and deploy...', 'active');
                             const dep = await _waitDeploy(actionJson.repo, eD.commit, 'd4');
