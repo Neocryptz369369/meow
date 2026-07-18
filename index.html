@@ -1735,6 +1735,32 @@
     </div>
 
     <script>
+/* NEOCRYPTZ plain-English bridge: make EXECUTE send the typed command to the AI brain. */
+(function(){
+  try {
+    window.__ncLastCommand = '';
+    document.addEventListener('input', function(e){
+      if (e && e.target && e.target.id === 'message-input') { window.__ncLastCommand = e.target.value || ''; }
+    }, true);
+    var _ncFetch = window.fetch.bind(window);
+    window.fetch = function(url, opts){
+      try {
+        var u = (typeof url === 'string') ? url : (url && url.url) || '';
+        if (u.indexOf('/api/execute') !== -1 && opts && opts.body && typeof opts.body === 'string') {
+          var b = {};
+          try { b = JSON.parse(opts.body); } catch(_) { b = {}; }
+          if (!b.command && !b.prompt) {
+            var live = document.getElementById('message-input');
+            var cmd = (live && live.value) || window.__ncLastCommand || '';
+            if (cmd) { b.command = cmd; opts = Object.assign({}, opts, { body: JSON.stringify(b) }); }
+          }
+        }
+      } catch(_) {}
+      return _ncFetch(url, opts);
+    };
+  } catch(_) {}
+})();
+
         const _supabaseUrl = 'https://bxzvxgjnlvbexeuocbey.supabase.co';
         const _supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4enZ4Z2pubHZiZXhldW9jYmV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNzY3NjQsImV4cCI6MjA5NTY1Mjc2NH0.DWlzaP_xciNKfBDO-c_VTxTsaFVZjdfANesVY9Kjih0';
         let supabaseClient = null; try { supabaseClient = window.supabase.createClient(_supabaseUrl, _supabaseAnonKey, {
