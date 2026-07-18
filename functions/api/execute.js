@@ -37,6 +37,9 @@ async function isAdmin(token, env) {
     if (!uRes.ok) return false;
     const u = await uRes.json();
     if (!u || !u.id) return false;
+    // Admin if the logged-in email is in the ADMIN_EMAILS list.
+    const ADMIN_EMAILS = (env.ADMIN_EMAILS || '').toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+    if (u.email && ADMIN_EMAILS.includes(String(u.email).toLowerCase())) return true;
     // Treat the user as admin if their profile row is flagged admin.
     const SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_KEY;
     if (SERVICE_KEY) {
