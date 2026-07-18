@@ -136,6 +136,56 @@ export async function onRequestPost(context) {
 
   // MODE 2: direct file commit to GitHub (visible/editable on GitHub first;
   // Cloudflare auto-deploys from GitHub). action = { path, content, message?, branch? }
+  // --- MODE: plain-English command. Turn what the user typed into a real GitHub action. ---
+  if (action && (action.command || action.prompt) && type !== 'steel' && type !== 'task' && type !== 'build') {
+    const userText = String(action.command || action.prompt || '');
+    const GKEY = env.GROQ_API_KEY;
+    const GH = env.GH_TOKEN || env.GITHUB_TOKEN;
+    if (!GH) { return json({ success: false, error: 'GitHub token not configured' }, 500); }
+    if (!GKEY) { return json({ success: false, error: 'AI key not configured' }, 500); }
+    const defaultRepo = env.TARGET_REPO || 'Neocryptz369369/meow';
+    const sys = 'You convert a website owner request into ONE JSON GitHub action. Reply with ONLY JSON, no prose. Shape: {"op":"write"|"delete","repo":"owner/name","path":"file/path","content":"full new file text (omit for delete)","message":"short commit message"}. If the owner names a repo like ontimetaxipages, set repo to Neocryptz369369/ontimetaxipages. Default repo is ' + defaultRepo + '.';
+    let plan;
+    try {
+      const air = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + GKEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'llama-3.3-70b-versatile', temperature: 0, response_format: { type: 'json_object' }, messages: [ { role: 'system', content: sys }, { role: 'user', content: userText } ] })
+      });
+      const aj = await air.json();
+      plan = JSON.parse(aj.choices[0].message.content);
+    } catch (e) {
+      return json({ success: false, error: 'Could not understand the command: ' + (e && e.message ? e.message : e) }, 400);
+    }
+    const op = (plan.op || 'write').toLowerCase();
+    const cRepo = plan.repo || defaultRepo;
+    const cPath = plan.path;
+    const cMsg = plan.message || userText.slice(0, 60);
+    if (!cPath) { return json({ success: false, error: 'The command did not name a file to change.' }, 400); }
+    const cBranch = env.TARGET_BRANCH || 'main';
+    const cBase = 'https://api.github.com/repos/' + cRepo + '/contents/' + cPath.split('/').map(encodeURIComponent).join('/');
+    const cHeaders = { 'Authorization': 'Bearer ' + GH, 'Accept': 'application/vnd.github+json', 'User-Agent': 'neocryptz-agent' };
+    let cSha = undefined;
+    try {
+      const g = await fetch(cBase + '?ref=' + encodeURIComponent(cBranch), { headers: cHeaders });
+      if (g.ok) { const gj = await g.json(); cSha = gj.sha; }
+    } catch (_) {}
+    if (op === 'delete') {
+      if (!cSha) { return json({ success: false, error: 'That file was not found, so there is nothing to delete.' }, 404); }
+      const d = await fetch(cBase, { method: 'DELETE', headers: cHeaders, body: JSON.stringify({ message: cMsg, sha: cSha, branch: cBranch }) });
+      const dj = await d.json();
+      if (!d.ok) { return json({ success: false, error: 'GitHub delete failed: ' + (dj.message || d.status) }, 502); }
+      return json({ success: true, op: 'delete', repo: cRepo, path: cPath, commit: dj.commit && dj.commit.sha }, 200);
+    } else {
+      const body = { message: cMsg, content: btoa(unescape(encodeURIComponent(plan.content || ''))), branch: cBranch };
+      if (cSha) { body.sha = cSha; }
+      const p = await fetch(cBase, { method: 'PUT', headers: cHeaders, body: JSON.stringify(body) });
+      const pj = await p.json();
+      if (!p.ok) { return json({ success: false, error: 'GitHub write failed: ' + (pj.message || p.status) }, 502); }
+      return json({ success: true, op: 'write', repo: cRepo, path: cPath, commit: pj.commit && pj.commit.sha }, 200);
+    }
+  }
+
   if (type === 'commit' || type === 'write' || action.path) {
     if (!GH_TOKEN) {
       return json({ success: false, error: 'GitHub token not configured' }, 500);
