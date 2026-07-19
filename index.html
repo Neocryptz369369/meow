@@ -3645,22 +3645,31 @@
                 }
             }
 
-            // Remote users  fetched through a server route that verifies a real
-            // admin session, instead of querying Supabase directly from the browser
+            // Remote users  pulled straight from the Supabase profiles table so admins
+            // see EVERY registered user, not just the ones on this device. We only read
+            // non-sensitive fields (never api keys, email, address, phone, or age).
             let remoteUsers = {};
             try {
-                const adminToken = localStorage.getItem('token');
-                const resp = await fetch('/api/admin/users', {
-                    headers: { 'Authorization': 'Bearer ' + adminToken }
-                });
-                if (resp.ok) {
-                    const fetched = await resp.json();
-                    for (const key in fetched) {
-                        // Don't overwrite a local user entry (local has plan/ban info)
-                        if (!localUsers[key]) remoteUsers[key] = fetched[key];
+                if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+                    const _pr = await supabaseClient.from('profiles').select('username, plan, status, credits, banned, created_at');
+                    if (_pr && !_pr.error && _pr.data) {
+                        for (const row of _pr.data) {
+                            const uname = (row.username || '').trim();
+                            if (!uname) continue;
+                            const key = uname.toLowerCase();
+                            // Don't overwrite a local user entry (local has extra plan/ban info)
+                            if (!localUsers[key] && !localUsers[uname]) {
+                                remoteUsers[uname] = {
+                                    username: uname,
+                                    plan: row.plan || 'Free',
+                                    status: row.status || 'active',
+                                    credits: row.credits,
+                                    banned: !!row.banned,
+                                    created_at: row.created_at
+                                };
+                            }
+                        }
                     }
-                } else {
-                    console.warn('admin/users:', resp.status);
                 }
             } catch(e) {}
 
