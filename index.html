@@ -2608,6 +2608,16 @@
 
                 //  Browser Permission Request (server-extracted  no regex needed) 
                 if (data.browserRequest) {
+                    // Only open the AI Agent / browser when the user actually asked to work on a website.
+                    // Otherwise just answer normally so the agent doesn't pop up on plain lookups.
+                    const _um = ((typeof displayMsg !== 'undefined' && displayMsg) || (typeof msg !== 'undefined' && msg) || '').toLowerCase();
+                    const _wantsWeb = /\bgo to\b|\bopen\b|\bwebsite\b|\bweb site\b|\bbrowse\b|\bbrowser\b|\blog ?in\b|\bsign ?in\b|\bfill out\b|\bfill in\b|\bclick\b|\bpost\b|\bsubmit\b|\bupdate\b|\bwork on\b|\bmeow\b|ontimetaxi|https?:\/\/|www\.|\.com\b|\.net\b|\.org\b|\.io\b/.test(_um);
+                    if (!_wantsWeb) {
+                        if (aiText && aiText.trim()) _ncTypewriter(aiText, () => {});
+                        const _sb0 = document.getElementById('send-btn');
+                        if (_sb0) { _sb0.disabled = false; }
+                        return;
+                    }
                     if (aiText && aiText.trim()) _ncTypewriter(aiText, () => {});
                     const allowed = await _showBrowserPermPopup(data.browserRequest.description || 'Open a browser to complete this task');
                     if (allowed) {
@@ -3735,6 +3745,7 @@
                         <button onclick="grantManualPlan('${passingId}', 'Free')" style="font-size:0.8em; padding:2px; background:#ff8c00; border-color:#ff8c00; color:#fff;">REVOKE</button>
                         <button onclick="banUser('${passingId}')" style="font-size:0.8em; padding:2px; background:#ff0000; border-color:#ff0000; color:#fff;">BAN</button>
                         <button onclick="deleteUser('${escapeHtml(usr.username)}', '${passingId}')" style="font-size:0.8em; padding:2px; background:#000; border:1px solid #ff0000; color:#ff0000;"> DELETE</button>
+                        <button onclick=\"viewUserChatLogs('${escapeHtml(usr.username)}')\" style=\"font-size:0.8em; padding:2px; background:#003300; border:1px solid #00ff88; color:#00ff88;\">CHAT LOGS</button>
                         ${usr.username.toLowerCase() !== 'neocryptz' ? `<button onclick="toggleAdminPromotion('${escapeHtml(usr.username)}')" style="font-size:0.8em; padding:2px; background:${usr.is_admin ? '#4b0082' : '#003366'}; border-color:${usr.is_admin ? '#9400d3' : '#0066cc'}; color:#fff;">${usr.is_admin ? ' CO-ADMIN' : ' PROMOTE'}</button>` : '<span style="font-size:0.75em; color:#ffd700;"> OWNER</span>'}
                     </td>
                 </tr>`;
@@ -5896,6 +5907,45 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
         };
         try { _runBrowserSlideshow(req); } catch (e) { console.error('AI Agent popup error', e); }
     }
+    async function viewUserChatLogs(username) {
+        try {
+            let logs = [];
+            if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+                const _r = await supabaseClient.from('chat_logs')
+                    .select('username,user_msg,ai_response,created_at')
+                    .eq('username', username)
+                    .order('created_at', { ascending: false })
+                    .limit(1000);
+                if (_r && _r.data) logs = _r.data;
+            }
+            let body = '';
+            if (!logs.length) {
+                body = '<p style="color:#aaa;">No chat logs recorded for this user yet.</p>';
+            } else {
+                logs.forEach(function(log) {
+                    body += '<div style="margin-bottom:14px; border:1px solid #333; padding:10px; border-radius:5px; background:rgba(0,0,0,0.5);">' +
+                        '<strong style="color:var(--secondary);">' + escapeHtml(new Date(log.created_at).toLocaleString()) + '</strong>' +
+                        '<div style="margin-top:5px; color:#fff;"><b>Msg:</b> ' + escapeHtml(log.user_msg || '') + '</div>' +
+                        '<div style="margin-top:5px; color:var(--primary);"><b>AI:</b> ' + escapeHtml(log.ai_response || '') + '</div>' +
+                        '</div>';
+                });
+            }
+            let modal = document.getElementById('user-chatlogs-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'user-chatlogs-modal';
+                modal.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:100000; display:flex; align-items:center; justify-content:center; padding:20px;';
+                document.body.appendChild(modal);
+            }
+            modal.innerHTML = '<div style="background:#0a0a0a; border:1px solid var(--primary); border-radius:8px; max-width:700px; width:100%; max-height:80vh; overflow-y:auto; padding:20px;">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">' +
+                '<h3 style="color:var(--primary); margin:0;">CHAT LOGS  ' + escapeHtml(username) + '</h3>' +
+                '<button onclick="document.getElementById(\'user-chatlogs-modal\').remove()" style="background:#ff0000; border:none; color:#fff; padding:4px 10px; border-radius:4px; cursor:pointer;">CLOSE</button>' +
+                '</div>' + body + '</div>';
+            modal.style.display = 'flex';
+        } catch (e) { console.error('viewUserChatLogs error', e); }
+    }
+
     function closeLogoBrowserPopup() {
         const popup = document.getElementById('logo-browser-popup');
         const logoImg = document.getElementById('logo-img');
