@@ -2901,7 +2901,7 @@
                     let globalChat = JSON.parse(localStorage.getItem('globalChatHistory') || '[]');
                     globalChat.push({ timestamp: new Date().toISOString(), username: currentUser?.username || 'Unknown', user_msg: msg, ai_response: aiText });
                     localStorage.setItem('globalChatHistory', JSON.stringify(globalChat));
-                    fetch('/api/history', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: currentUser?.username, action:'save', user_msg: msg, ai_response: aiText }) }).catch(()=>{});
+                    if(typeof supabaseClient!=='undefined' && supabaseClient){ supabaseClient.from('chat_logs').insert([{ username: (currentUser && currentUser.username) || 'Unknown', user_msg: msg, ai_response: aiText }]).then(function(){}).catch(function(){}); }
                     return;
                 }
                 //  End Execution Engine 
@@ -2950,11 +2950,7 @@
             localStorage.setItem('globalChatHistory', JSON.stringify(globalChat));
 
             // Cloud backup  save to Supabase so history survives browser/device changes
-            fetch('/api/history', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: currentUser?.username, action: 'save', user_msg: msg, ai_response: aiText })
-            }).catch(() => {}); // fire and forget
+            if(typeof supabaseClient!=='undefined' && supabaseClient){ supabaseClient.from('chat_logs').insert([{ username: (currentUser && currentUser.username) || 'Unknown', user_msg: msg, ai_response: aiText }]).then(function(){}).catch(function(){}); } // fire and forget
         }
 
         //  Change password  works for both local accounts and real Supabase accounts 
@@ -3634,6 +3630,8 @@
             // Local users (registered on this device)
             let localUsers = JSON.parse(localStorage.getItem('localUsers') || '{}');
             let globalChat = JSON.parse(localStorage.getItem('globalChatHistory') || '[]');
+            // Pull ALL users' chat logs from the cloud so admins see everyone, not just this device
+            try { if(typeof supabaseClient!=='undefined' && supabaseClient){ const _r = await supabaseClient.from('chat_logs').select('username,user_msg,ai_response,created_at').order('created_at',{ascending:false}).limit(2000); if(_r && _r.data && _r.data.length){ globalChat = _r.data.map(function(x){ return { timestamp: x.created_at, username: x.username, user_msg: x.user_msg, ai_response: x.ai_response }; }); } } } catch(e){}
 
             // Always make sure the current admin appears  clear them from blocklist and inject into table
             if (currentUser && currentUser.is_admin) {
