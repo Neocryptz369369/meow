@@ -1085,7 +1085,7 @@
                     <span id="admin-icon" style="cursor:pointer; color:#8a2be2; font-size:1.2em;" onclick="(function(){var m=document.getElementById('admin-modal');if(m){m.style.display='flex';m.style.zIndex='99999';}try{loadAdminData();}catch(e){}try{loadUsersAndLogs();}catch(e){}try{clearSupportBadge();}catch(e){}try{var ads=document.getElementById('ad-sidebar');if(ads)ads.style.display='none';}catch(e){}})()" title="Admin Console">🛡️</span>
                     <span id="new-user-badge" style="display:none; position:absolute; top:-7px; right:-7px; background:#ffd700; color:#000; border-radius:50%; width:17px; height:17px; font-size:10px; font-weight:900; line-height:17px; text-align:center; animation:badgePulse 0.6s infinite alternate; cursor:pointer;" onclick="openModal('admin-modal'); showAdminTab('admin-users-logs'); loadUsersAndLogs(); clearNewUserBadge()">0</span>
                 </span>
-                <span id="user-icon" style="display:none; cursor: pointer; font-size: 1.2em;" onclick="openModal('user-menu-modal')" title="Settings & Menu"></span>
+                <span id="user-icon" style="display:inline-block; margin-left:10px; vertical-align:middle; cursor: pointer; font-size: 1.2em;" onclick="openModal('user-menu-modal')" title="Settings & Menu">⚙️</span>
             </div>
 
         </div>
@@ -1095,7 +1095,7 @@
             <img id="logo-img" src="crypt.png" alt="Neocryptz Logo" class="neon-border" style="max-width: 260px; display: block; border-radius: 5px; transition: opacity 0.3s ease;">
             
             <!-- Browser popup overlay over logo -->
-            <div id="logo-browser-popup" class="neon-border" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 260px; background: rgba(10, 0, 26, 0.95); border: 2px solid var(--primary); border-radius: 12px; box-shadow: 0 0 20px rgba(168, 85, 247, 0.5); z-index: 100; flex-direction: column; overflow: hidden; font-family: monospace; transition: all 0.3s ease; box-sizing: border-box;">
+            <div id="logo-browser-popup" class="neon-border" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 264px; height: 264px; background: rgba(10, 0, 26, 0.95); border: 2px solid var(--primary); border-radius: 12px; box-shadow: 0 0 20px rgba(168, 85, 247, 0.5); z-index: 100; flex-direction: column; overflow: hidden; font-family: monospace; transition: all 0.3s ease; box-sizing: border-box;">
                 <!-- Header -->
                 <div style="background: linear-gradient(90deg, #120020, #1a0030); padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(168, 85, 247, 0.3); font-size: 0.7em;">
                     <div style="display: flex; gap: 4px;">
