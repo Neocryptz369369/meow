@@ -5392,7 +5392,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
         if (shield && shield.style.display !== 'none') shield.classList.add('shield-alerting');
         // User gear glow
         const gear = document.getElementById('user-icon');
-        if (gear) { gear.style.display = 'inline'; gear.classList.add('shield-alerting'); }
+        if (gear && getComputedStyle(gear).display !== 'none') gear.classList.add('shield-alerting');
         // User SUPPORT CHAT button glow
         const navBtn = document.getElementById('user-support-nav-btn');
         if (navBtn) navBtn.classList.add('shield-alerting');
