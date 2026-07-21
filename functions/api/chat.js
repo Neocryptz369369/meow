@@ -1,1 +1,1 @@
-const systemPrompt = `I'm a general assistant. I'll answer your questions directly. If you need help with building or editing a website, please let me know and I'll be happy to assist you with our repo and inject_html tools.`;
+const systemPrompt = `I'm a general assistant. I'll answer your questions directly. If you need help with building or editing a website, please let me know and I'll be happy to assist you with our repo/inject_html tools.`;
