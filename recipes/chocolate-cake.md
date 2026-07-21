@@ -11,7 +11,8 @@
 ## Instructions:
 1. Preheat oven to 350°F (180°C).
 2. Grease two 9-inch round cake pans.
-3. Prepare the cake mix according to the ingredients.
-4. Divide the batter evenly between the prepared pans.
-5. Bake for 30-35 minutes or until a toothpick comes out clean.
-6. Allow the cakes to cool in the pans for 10 minutes, then transfer to a wire rack to cool completely.
+3. Mix dry ingredients.
+4. Combine sugar, butter, eggs, and vanilla extract.
+5. Combine wet and dry ingredients.
+6. Divide batter between prepared pans.
+7. Bake for 30-35 minutes or until a toothpick comes out clean.
