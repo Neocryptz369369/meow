@@ -4505,17 +4505,17 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             localStorage.setItem('regLocked', isLocked ? 'true' : 'false');
         }
 
-        function submitFeedback() {
+        async function submitFeedback() {
             const text = document.getElementById('feedback-text').value.trim();
             if (!text) return alert("Please enter some feedback before submitting.");
 
-            let feedbacks = JSON.parse(localStorage.getItem('globalFeedback') || '[]');
+            let feedbacks = (await supabaseClient.from('support_messages').select('sender_name, message, created_at').ilike('message', '[FEEDBACK]%').order('created_at', { ascending: true })).data?.map(r => ({ username: r.sender_name, text: (r.message || '').replace('[FEEDBACK] ', '') })) || [];
             feedbacks.push({
                 username: currentUser?.username || 'Anonymous',
                 text: text,
                 timestamp: new Date().toISOString()
             });
-            localStorage.setItem('globalFeedback', JSON.stringify(feedbacks));
+            await supabaseClient.from('support_messages').insert([{ user_id: await getSupportUid(), sender_name: (currentUser?.username || 'Anonymous'), message: '[FEEDBACK] ' + text }]);
 
             document.getElementById('feedback-text').value = '';
             closeModal('feedback-modal');
@@ -4710,7 +4710,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             if(document.getElementById('admin-beta-code')) document.getElementById('admin-beta-code').value = localStorage.getItem('activeBetaCode') || 'NEO-BETA-2027';
             if(document.getElementById('admin-base-guidelines')) document.getElementById('admin-base-guidelines').value = localStorage.getItem('adminBaseGuidelines') || '';
 
-            let feedbacks = JSON.parse(localStorage.getItem('globalFeedback') || '[]');
+            let feedbacks = (await supabaseClient.from('support_messages').select('sender_name, message, created_at').ilike('message', '[FEEDBACK]%').order('created_at', { ascending: true })).data?.map(r => ({ username: r.sender_name, text: (r.message || '').replace('[FEEDBACK] ', '') })) || [];
             let fbHtml = '';
             if (feedbacks.length === 0) {
                 fbHtml = '<p style="color: #aaa;">No feedback recorded yet.</p>';
