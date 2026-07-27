@@ -268,6 +268,7 @@ Nothing should go straight to the live site; it goes through GitHub first so the
         systemPrompt = "CRITICAL DIRECTIVE: YOU MUST TRANSLATE YOUR ENTIRE RESPONSE INTO " + keys.TARGET_LANGUAGE.toUpperCase() + ". DO NOT USE ENGLISH. " + systemPrompt;
     }
 
+    if (keys && keys.BASE_GUIDELINES) {
     try { if (supabase) { const g = await supabase.from('app_settings').select('value').eq('key','base_guidelines').single(); if (g && g.data && g.data.value) { keys = keys || {}; keys.BASE_GUIDELINES = g.data.value; } } } catch (e) {}
         systemPrompt += "\n\nCOMPANY BRAND GUIDELINES TO FOLLOW STRICTLY:\n" + keys.BASE_GUIDELINES;
     }
