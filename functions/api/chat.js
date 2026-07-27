@@ -269,7 +269,7 @@ Nothing should go straight to the live site; it goes through GitHub first so the
     }
 
     if (keys && keys.BASE_GUIDELINES) {
-    try { if (supabase) { const g = await supabase.from('app_settings').select('value').eq('key','base_guidelines').single(); if (g && g.data && g.data.value) { keys = keys || {}; keys.BASE_GUIDELINES = g.data.value; } } } catch (e) {}
+    try { if (supabase) { const g = await supabase.from('app_settings').select('value').eq('key','base_guidelines').single(); if (g && g.data && g.data.value) { keys.BASE_GUIDELINES = g.data.value; } } } catch (e) {}
         systemPrompt += "\n\nCOMPANY BRAND GUIDELINES TO FOLLOW STRICTLY:\n" + keys.BASE_GUIDELINES;
     }
 
