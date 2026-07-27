@@ -1828,6 +1828,13 @@
 
             // Check local storage first (Fallback)
             if (await checkGeoBlock()) return;
+            // Load global brand guidelines from Supabase so they apply to ALL users (cache for the sync request path)
+            try {
+                if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+                    const { data: __gd } = await supabaseClient.from('app_settings').select('value').eq('key', 'base_guidelines').single();
+                    if (__gd && typeof __gd.value === 'string') localStorage.setItem('adminBaseGuidelines', __gd.value);
+                }
+            } catch (e) { console.warn('Startup guidelines load failed:', e); }
             let localUser = localStorage.getItem('currentUser');
             let session = null;
             let userProfile = null;
@@ -3823,10 +3830,22 @@
             localStorage.setItem('activeBetaCode', code);
             alert("Beta Code updated to: " + code);
         }
-        function saveGuidelines() {
+        async function saveGuidelines() {
             const text = document.getElementById('admin-base-guidelines').value.trim();
             localStorage.setItem('adminBaseGuidelines', text);
-            alert("Custom Brand Guidelines Saved!");
+            let backendOk = false;
+            try {
+                if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+                    const { error } = await supabaseClient
+                        .from('app_settings')
+                        .upsert({ key: 'base_guidelines', value: text, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+                    if (!error) backendOk = true;
+                    else console.warn('Guidelines Supabase save failed:', error.message);
+                }
+            } catch (e) { console.warn('Guidelines Supabase save error:', e); }
+            alert(backendOk
+                ? "Custom Brand Guidelines Saved! (synced to all users)"
+                : "Guidelines saved on this device. NOTE: backend sync failed \u2014 check that the app_settings write policy is enabled in Supabase.");
         }
 
         function downloadChat() {
@@ -4709,7 +4728,19 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
             document.getElementById('provider-order').value = localStorage.getItem('providerOrder') || 'sambanova,gemini,openrouter,pollinations';
             loadScrapes(); // Load scrapes
             if(document.getElementById('admin-beta-code')) document.getElementById('admin-beta-code').value = localStorage.getItem('activeBetaCode') || 'NEO-BETA-2027';
-            if(document.getElementById('admin-base-guidelines')) document.getElementById('admin-base-guidelines').value = localStorage.getItem('adminBaseGuidelines') || '';
+            if(document.getElementById('admin-base-guidelines')) {
+                document.getElementById('admin-base-guidelines').value = localStorage.getItem('adminBaseGuidelines') || '';
+                try {
+                    if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+                        const { data: gd } = await supabaseClient.from('app_settings').select('value').eq('key', 'base_guidelines').single();
+                        if (gd && typeof gd.value === 'string') {
+                            localStorage.setItem('adminBaseGuidelines', gd.value);
+                            const gEl = document.getElementById('admin-base-guidelines');
+                            if (gEl) gEl.value = gd.value;
+                        }
+                    }
+                } catch (e) { console.warn('Guidelines load from Supabase failed:', e); }
+            }
 
             let feedbacks = JSON.parse(localStorage.getItem('globalFeedback') || '[]');
             let fbHtml = '';
