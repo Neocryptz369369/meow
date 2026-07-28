@@ -347,9 +347,19 @@ Nothing should go straight to the live site; it goes through GitHub first so the
             return J(500, { error: "Cloudflare Workers AI binding (env.AI) is not available." });
         }
 
-        const aiResp = await env.AI.run('@cf/meta/llama-3.1-8b-instruct-fast', {
-            prompt: convo
-        });
+        const aiResp = await (async () => {
+          const __models = ['@cf/zai-org/glm-4.7-flash', '@cf/moonshotai/kimi-k2.6', '@cf/meta/llama-3.1-8b-instruct-fast'];
+          let __last;
+          for (const __m of __models) {
+            try {
+              const __r = await env.AI.run(__m, { messages: [{ role: 'user', content: convo }] });
+              const __txt = (__r && (__r.response || __r.result)) ? (__r.response || __r.result) : '';
+              if (__txt && String(__txt).trim().length > 0) return __r;
+              __last = __r;
+            } catch (__e) { __last = { response: '', __err: String(__e && __e.message || __e) }; }
+          }
+          return __last || { response: '' };
+        })();
 
         let text = (aiResp && (aiResp.response !== undefined ? aiResp.response : aiResp.result)) || "";
         if (typeof text !== "string") text = String(text || "");
