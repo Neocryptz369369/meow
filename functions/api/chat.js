@@ -363,6 +363,25 @@ const aiResp = await env.AI.run('@cf/meta/llama-3.1-8b-instruct-fast', { message
             text = __stripped.length > 0 ? __stripped : "I'm here to help. What would you like me to do? (I only run actions like commits, deploys, or repo edits when you explicitly ask.)";
           }
         } catch (__ge) { /* guard is best-effort; never block the response */ }
+        // === REPO-MENTION GUARD (code-level backstop, does not rely on model obedience) ===
+        // Rule: never mention repositories/repos/repo unless the user's current message brings them up.
+        try {
+          const __um = String(prompt||'').toLowerCase();
+          const __userAskedRepo = /\brepo(s|sitor(y|ies))?\b/.test(__um);
+          if (!__userAskedRepo && typeof text === 'string') {
+            const __repoRe = /\brepo(s|sitor(y|ies))?\b/i;
+            // Drop any sentence/line that references repositories.
+            let __clean = text
+              .split(/(?<=[.!?])\s+|\n+/)
+              .filter(__s => !__repoRe.test(__s))
+              .join(' ')
+              .replace(/\s{2,}/g, ' ')
+              .trim();
+            if (!__clean) __clean = "I'm here to help. What would you like me to do?";
+            text = __clean;
+          }
+        } catch(__re) { /* best-effort; never block the response */ }
+
 
         if (typeof text !== "string") text = String(text || "");
 
