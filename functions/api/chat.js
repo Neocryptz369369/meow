@@ -351,6 +351,19 @@ Nothing should go straight to the live site; it goes through GitHub first so the
 const aiResp = await env.AI.run('@cf/meta/llama-3.1-8b-instruct-fast', { messages: [{ role: 'user', content: convo }] });
 
         let text = (aiResp && (aiResp.response !== undefined ? aiResp.response : aiResp.result)) || "";
+        // SAFETY GUARD: only allow tool-action (<<<EXEC>>>) execution when the user's
+        // current message explicitly requests an action. Otherwise strip EXEC blocks so
+        // the agent replies as plain text and never self-initiates commits/deploys/OAuth.
+        try {
+          const __userMsg = String(prompt || '').toLowerCase();
+          const __actionWords = ['commit','deploy','push','list repo','list my repo','scrape','inject','create file','edit file','delete','run ','execute','oauth','authorize','pull request','merge','branch','read file','write file','update file'];
+          const __wantsAction = __actionWords.some(w => __userMsg.includes(w));
+          if (!__wantsAction && typeof text === 'string' && text.indexOf('<<<EXEC>>>') !== -1) {
+            const __stripped = text.replace(/<<<EXEC>>>[\s\S]*?<<<END_EXEC>>>/g, '').trim();
+            text = __stripped.length > 0 ? __stripped : "I'm here to help. What would you like me to do? (I only run actions like commits, deploys, or repo edits when you explicitly ask.)";
+          }
+        } catch (__ge) { /* guard is best-effort; never block the response */ }
+
         if (typeof text !== "string") text = String(text || "");
 
         const { text: cleanText, browserRequest } = extractBrowserBlock(text);
