@@ -347,7 +347,8 @@ Nothing should go straight to the live site; it goes through GitHub first so the
             return J(500, { error: "Cloudflare Workers AI binding (env.AI) is not available." });
         }
 
-        const aiResp = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+        const __model = (req && req.body && req.body.model) ? req.body.model : '@cf/meta/llama-3.1-8b-instruct';
+        const aiResp = await env.AI.run(__model, {
             prompt: convo
         });
 
