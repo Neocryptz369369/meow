@@ -335,6 +335,7 @@ Nothing should go straight to the live site; it goes through GitHub first so the
     // have been removed. Prompts now run locally on Cloudflare's serverless edge GPUs.
     try {
         let convo = systemPrompt + "\n\n";
+        convo += "\n\nIMPORTANT BEHAVIOR RULES: Only output an <<<EXEC>>> action block when the user's message is an EXPLICIT request to perform an action (e.g. 'commit', 'deploy', 'list my repos', 'scrape', 'inject'). For greetings, questions, opinions, or casual conversation, reply with normal helpful TEXT and DO NOT output any <<<EXEC>>> block. NEVER self-initiate git commits, deployments, OAuth or authorization flows unless the user explicitly asks in their current message.";
         if (Array.isArray(formattedHistory)) {
             for (const m of formattedHistory) {
                 const who = m.role === "assistant" ? "Assistant" : "User";
@@ -347,19 +348,7 @@ Nothing should go straight to the live site; it goes through GitHub first so the
             return J(500, { error: "Cloudflare Workers AI binding (env.AI) is not available." });
         }
 
-        const aiResp = await (async () => {
-          const __models = ['@cf/zai-org/glm-4.7-flash', '@cf/moonshotai/kimi-k2.6', '@cf/meta/llama-3.1-8b-instruct-fast'];
-          let __last;
-          for (const __m of __models) {
-            try {
-              const __r = await env.AI.run(__m, { messages: [{ role: 'user', content: convo }] });
-              const __txt = (__r && (__r.response || __r.result)) ? (__r.response || __r.result) : '';
-              if (__txt && String(__txt).trim().length > 0) return __r;
-              __last = __r;
-            } catch (__e) { __last = { response: '', __err: String(__e && __e.message || __e) }; }
-          }
-          return __last || { response: '' };
-        })();
+const aiResp = await env.AI.run('@cf/meta/llama-3.1-8b-instruct-fast', { messages: [{ role: 'user', content: convo }] });
 
         let text = (aiResp && (aiResp.response !== undefined ? aiResp.response : aiResp.result)) || "";
         if (typeof text !== "string") text = String(text || "");
