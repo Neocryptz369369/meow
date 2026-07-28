@@ -63,6 +63,24 @@ async function isAdmin(token, env) {
 }
 
 export async function onRequestPost(context) {
+  // ===== HARD SAFETY GATE (added to stop unrequested repo writes) =====
+  // This endpoint performs GitHub commits. To prevent the AI from committing on its
+  // own, we DENY by default. A commit is only allowed when the request explicitly
+  // carries userConfirmed === true (set by the UI only when the human approves the
+  // action in the current message). Missing/false => 403, no commit happens.
+  try {
+    const __reqClone = context.request.clone();
+    let __gateBody = {};
+    try { __gateBody = await __reqClone.json(); } catch (_) { __gateBody = {}; }
+    const __confirmed = __gateBody && (__gateBody.userConfirmed === true || __gateBody.userConfirmed === 'true');
+    if (!__confirmed) {
+      return json({ error: 'Action blocked: repository writes require explicit user confirmation (userConfirmed=true). The AI cannot commit on its own.' }, 403);
+    }
+  } catch (__gateErr) {
+    return json({ error: 'Action blocked: safety gate error.' }, 403);
+  }
+  // ===== END HARD SAFETY GATE =====
+
   const { request, env } = context;
 
   const GH_TOKEN = env.GH_TOKEN || env.GITHUB_TOKEN;
