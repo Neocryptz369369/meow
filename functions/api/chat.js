@@ -407,6 +407,41 @@ const aiResp = await env.AI.run('@cf/meta/llama-3.1-8b-instruct-fast', { message
             }
           }
         } catch(__re) { /* best-effort; never block the response */ }
+        // === GUIDELINES POSITIVE-RULE HANDLER (guarantees "always say X" phrases at code level) ===
+        // Parses "always say X" / "always respond with X" / "when you answer ... say X" /
+        //   "end (every) (response/answer) with X" and ensures the phrase appears in every reply.
+        try {
+          const __gRaw = String(__GUIDELINES_TEXT || '');
+          const B = String.fromCharCode(92);
+          const S = B + 's+';
+          const NB = B + 'b';
+          const TAIL = '([^.' + B + 'n]{2,80})';
+          const __pats = [
+            new RegExp('always say' + S + TAIL, 'ig'),
+            new RegExp('always respond with' + S + TAIL, 'ig'),
+            new RegExp('(?:when you answer|whenever you answer)[^,]*?' + NB + 'say' + S + TAIL, 'ig'),
+            new RegExp('end (?:every |each |your )?(?:response|answer|reply)s? with' + S + TAIL, 'ig')
+          ];
+          const __phrases = [];
+          for (const re of __pats) {
+            let mm;
+            while ((mm = re.exec(__gRaw)) !== null) {
+              let p = mm[1].trim().replace(new RegExp('^["\u2018\u201c]|["\u2019\u201d]$', 'g'), '').trim();
+              if (p && p.length >= 2 && p.length <= 80) __phrases.push(p);
+            }
+          }
+          if (typeof text === 'string' && __phrases.length) {
+            const __endRe = new RegExp('[.!?]$');
+            for (const p of __phrases) {
+              if (!text.toLowerCase().includes(p.toLowerCase())) {
+                text = text.trim();
+                if (text && !__endRe.test(text)) text += '.';
+                text = (text ? text + ' ' : '') + p;
+              }
+            }
+          }
+        } catch(__pe) { /* best-effort; never block the response */ }
+
 
 
         if (typeof text !== "string") text = String(text || "");
