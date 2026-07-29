@@ -100,6 +100,48 @@ export async function onRequest(context) {
 
     const supabaseUrl = ENV.SUPABASE_URL || 'https://bxzvxgjnlvbexeuocbey.supabase.co';
     const supabaseKey = ENV.SUPABASE_SERVICE_ROLE_KEY || ENV.SUPABASE_KEY;
+
+    // === PER-USER DAILY QUESTION LIMIT (admins & co-admins unlimited) ===
+    // Regular users (is_admin !== true) are capped at a daily number set in
+    // app_settings.user_daily_limit (default 50). Counts live in the daily_usage table.
+    try {
+      var __isAdmin = (body && (body.is_admin === true || body.is_admin === "true"));
+      var __uname = (body && body.username) ? String(body.username).trim() : "";
+      if (!__isAdmin && __uname && supabaseUrl && supabaseKey) {
+        var __H = { "apikey": supabaseKey, "Authorization": "Bearer " + supabaseKey, "Content-Type": "application/json" };
+        // 1) read the admin-configured limit (default 50)
+        var __limit = 50;
+        try {
+          var __lr = await fetch(supabaseUrl + "/rest/v1/app_settings?key=eq.user_daily_limit&select=value", { headers: __H });
+          var __lj = await __lr.json();
+          if (Array.isArray(__lj) && __lj.length && __lj[0].value != null) {
+            var __pv = parseInt(String(__lj[0].value).replace(/[^0-9]/g, ""), 10);
+            if (!isNaN(__pv) && __pv >= 0) __limit = __pv;
+          }
+        } catch (__le) { /* keep default */ }
+        // 2) get today's count for this user
+        var __today = new Date().toISOString().slice(0, 10);
+        var __cnt = 0;
+        try {
+          var __cr = await fetch(supabaseUrl + "/rest/v1/daily_usage?username=eq." + encodeURIComponent(__uname) + "&usage_date=eq." + __today + "&select=count", { headers: __H });
+          var __cj = await __cr.json();
+          if (Array.isArray(__cj) && __cj.length && __cj[0].count != null) __cnt = parseInt(__cj[0].count, 10) || 0;
+        } catch (__ce) { /* treat as 0 */ }
+        // 3) enforce
+        if (__cnt >= __limit) {
+          return J(429, { error: "Daily limit reached: you have used all " + __limit + " questions for today. Your limit resets tomorrow.", limitReached: true, provider: "Daily Limit Guard" });
+        }
+        // 4) increment (upsert) - fire and continue
+        try {
+          await fetch(supabaseUrl + "/rest/v1/daily_usage", {
+            method: "POST",
+            headers: Object.assign({}, __H, { "Prefer": "resolution=merge-duplicates" }),
+            body: JSON.stringify([{ username: __uname, usage_date: __today, count: __cnt + 1 }])
+          });
+        } catch (__ue) { /* best-effort; never block a valid request on write failure */ }
+      }
+    } catch (__lim) { /* limit guard is best-effort; never break chat */ }
+
     let supabase = null;
 
     if (supabaseKey) {
