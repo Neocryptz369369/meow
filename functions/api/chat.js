@@ -111,7 +111,7 @@ export async function onRequest(context) {
                 .eq('prompt', prompt.trim())
                 .single();
                 
-            if (data && data.response) {
+            if (false && data && data.response) { // CACHE DISABLED: always run full AI pipeline so System Prompt applies
                 return J(200, { result: data.response, provider: "System Cache (Zero-Cost)" });
             }
         } catch(e) { console.log("Cache lookup skipped."); }
