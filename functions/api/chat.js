@@ -73,6 +73,7 @@ export async function onRequest(context) {
     }
 
     const { prompt, keys, history, username } = req.body;
+    let __GUIDELINES_TEXT = '';
     if (!prompt) return J(400, { error: 'Missing prompt' });
 
     // Helper to cache AI responses to Supabase query_cache
@@ -271,6 +272,7 @@ Nothing should go straight to the live site; it goes through GitHub first so the
     if (keys && keys.BASE_GUIDELINES) {
     try { if (supabase) { const g = await supabase.from('app_settings').select('value').eq('key','base_guidelines').single(); if (g && g.data && g.data.value) { keys.BASE_GUIDELINES = g.data.value; } } } catch (e) {}
         systemPrompt += "\n\nCOMPANY BRAND GUIDELINES TO FOLLOW STRICTLY:\n" + keys.BASE_GUIDELINES;
+        try { __GUIDELINES_TEXT = String(keys.BASE_GUIDELINES || ''); } catch(e) { __GUIDELINES_TEXT = ''; }
     }
 
     if (keys && keys.LOCAL_SCRAPES && keys.LOCAL_SCRAPES.length > 0) {
@@ -363,22 +365,46 @@ const aiResp = await env.AI.run('@cf/meta/llama-3.1-8b-instruct-fast', { message
             text = __stripped.length > 0 ? __stripped : "I'm here to help. What would you like me to do? (I only run actions like commits, deploys, or repo edits when you explicitly ask.)";
           }
         } catch (__ge) { /* guard is best-effort; never block the response */ }
-        // === REPO-MENTION GUARD (code-level backstop, does not rely on model obedience) ===
-        // Rule: never mention repositories/repos/repo unless the user's current message brings them up.
+        // === GUIDELINES RULES ENGINE (code-level enforcement, does not rely on model obedience) ===
+        // Parses your admin Guidelines text for directives and enforces them on the AI's output.
+        // Supported directive styles (case-insensitive), one per line or sentence:
+        //   "never mention X" / "do not mention X" / "don't mention X"
+        //   "never <verb> ... unless i ask" / "only <do X> when i ask"
+        // Defaults always enforced: never mention repositories / OAuth / deploy unless the user asks.
         try {
-          const __um = String(prompt||'').toLowerCase();
-          const __userAskedRepo = /\brepo(s|sitor(y|ies))?\b/.test(__um);
-          if (!__userAskedRepo && typeof text === 'string') {
-            const __repoRe = /\brepo(s|sitor(y|ies))?\b/i;
-            // Drop any sentence/line that references repositories.
-            let __clean = text
-              .split(/(?<=[.!?])\s+|\n+/)
-              .filter(__s => !__repoRe.test(__s))
-              .join(' ')
-              .replace(/\s{2,}/g, ' ')
-              .trim();
-            if (!__clean) __clean = "I'm here to help. What would you like me to do?";
-            text = __clean;
+          const __userMsg = String(prompt || '').toLowerCase();
+          const __g = String(__GUIDELINES_TEXT || '').toLowerCase();
+
+          // 1) Collect "never mention X" topics from the guidelines.
+          const __topics = [];
+          const __mentionRe = /(?:never|do not|don't|dont)\s+(?:mention|talk about|bring up|reference|say)\s+([a-z0-9 ,/&'-]{2,60})/g;
+          let __m;
+          while ((__m = __mentionRe.exec(__g)) !== null) {
+            // split "a, b and c" style lists into individual words
+            __m[1].split(/[,]| and | or |\/|&/).forEach(w => {
+              w = w.replace(/\bunless.*$/,'').replace(/\bor repos?\b/,' repo').trim();
+              if (w && w.length >= 2 && w.length <= 40) __topics.push(w);
+            });
+          }
+          // Always-on defaults (your standing rules).
+          ['repository','repositories','repo','repos','oauth','o auth','deploy','deployment'].forEach(w => __topics.push(w));
+
+          // 2) Build a matcher; a topic is allowed through ONLY if the user's message references it.
+          const __esc = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+          const __topicRe = t => new RegExp('\\b' + __esc(t).replace(/\s+/g,'\\s+') + 's?\\b','i');
+
+          if (typeof text === 'string' && __topics.length) {
+            const __blocked = __topics.filter(t => {
+              const re = __topicRe(t);
+              return !re.test(__userMsg); // user did NOT ask about it -> block it
+            });
+            if (__blocked.length) {
+              const __units = text.split(/(?<=[.!?])\s+|\n+/);
+              let __clean = __units.filter(u => !__blocked.some(t => __topicRe(t).test(u))).join(' ')
+                .replace(/\s{2,}/g,' ').trim();
+              if (!__clean) __clean = "I'm here to help. What would you like me to do?";
+              text = __clean;
+            }
           }
         } catch(__re) { /* best-effort; never block the response */ }
 
