@@ -1636,6 +1636,13 @@
                     <textarea id="admin-system-prompt" rows="10" style="width:100%; box-sizing:border-box; font-family:monospace; font-size:12px;" placeholder="=== RULES MATRIX ===&#10;1. ...&#10;2. ..."></textarea>
                     <button onclick="saveSystemPrompt()" style="margin-top:8px;">SAVE SYSTEM PROMPT</button>
                 </div>
+
+                <div class="admin-box" style="margin-top:18px;">
+                    <h3 style="color:#ff4dff;">REGULAR USER DAILY QUESTION LIMIT</h3>
+                    <p style="font-size:12px;opacity:0.8;">Max questions per day for regular users. Admins and co-admins are always unlimited. Default: 50.</p>
+                    <input type="number" id="admin-user-limit" min="0" step="1" value="50" style="width:120px;padding:8px;background:#111;color:#0ff;border:1px solid #ff4dff;border-radius:6px;">
+                    <button class="btn" onclick="saveUserLimit()" style="margin-left:8px;">SAVE LIMIT</button>
+                </div>
                     
                 <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 10px;">
                     <h4 style="color: var(--secondary);">BETA TESTER SYSTEM</h4>
@@ -2604,7 +2611,7 @@
             const resp = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
-                body: JSON.stringify({ prompt: applyAnonymizer(displayMsg), session_id: session_id, keys: keysPayload, history: historyPayload, username: currentUser?.username || 'Unknown' })
+                body: JSON.stringify({ prompt: applyAnonymizer(displayMsg), session_id: session_id, keys: keysPayload, history: historyPayload, username: currentUser?.username || 'Unknown', is_admin: currentUser?.is_admin === true })
             });
 
             const data = await resp.json();
@@ -3873,6 +3880,22 @@
                 : 'System Prompt saved locally, but the cloud sync failed. Check your connection and try again.');
         }
 
+        async function saveUserLimit() {
+            const el = document.getElementById("admin-user-limit");
+            if (!el) return;
+            let val = parseInt(el.value, 10);
+            if (isNaN(val) || val < 0) { alert("Please enter a valid non-negative number."); return; }
+            localStorage.setItem("userDailyLimit", String(val));
+            try {
+                await supabaseClient
+                  .from("app_settings")
+                  .upsert({ key: "user_daily_limit", value: String(val) }, { onConflict: "key" });
+                alert("Regular-user daily question limit saved: " + val + " per day.");
+            } catch (e) {
+                alert("Could not save limit: " + (e && e.message ? e.message : e));
+            }
+        }
+
         function downloadChat() {
             const chatBox = document.getElementById('chat-window');
             const blob = new Blob([chatBox.innerText], { type: 'text/plain' });
@@ -4794,6 +4817,20 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
                     }
                 } catch (e) { console.warn('System prompt load from Supabase failed:', e); }
             }
+
+            // Load regular-user daily question limit into the admin field (default 50)
+            try {
+                if (typeof supabaseClient !== "undefined") {
+                    const { data: uld } = await supabaseClient.from("app_settings").select("value").eq("key", "user_daily_limit").maybeSingle();
+                    const ulEl = document.getElementById("admin-user-limit");
+                    if (ulEl) {
+                        let uv = (uld && uld.value != null) ? parseInt(String(uld.value).replace(/[^0-9]/g, ""), 10) : 50;
+                        if (isNaN(uv) || uv < 0) uv = 50;
+                        ulEl.value = uv;
+                        localStorage.setItem("userDailyLimit", String(uv));
+                    }
+                }
+            } catch (e) { console.warn("User limit load failed", e); }
 
             let feedbacks = JSON.parse(localStorage.getItem('globalFeedback') || '[]');
             let fbHtml = '';
