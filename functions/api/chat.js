@@ -103,14 +103,14 @@ export async function onRequest(context) {
 
     // === PER-USER DAILY QUESTION LIMIT (admins & co-admins unlimited) ===
     // Regular users (is_admin !== true) are capped at a daily number set in
-    // app_settings.user_daily_limit (default 50). Counts live in the daily_usage table.
+    // app_settings.user_daily_limit (default 100). Counts live in the daily_usage table.
     try {
       var __isAdmin = (body && (body.is_admin === true || body.is_admin === "true"));
       var __uname = (body && body.username) ? String(body.username).trim() : "";
       if (!__isAdmin && __uname && supabaseUrl && supabaseKey) {
         var __H = { "apikey": supabaseKey, "Authorization": "Bearer " + supabaseKey, "Content-Type": "application/json" };
-        // 1) read the admin-configured limit (default 50)
-        var __limit = 50;
+        // 1) read the admin-configured limit (default 100)
+        var __limit = 100;
         try {
           var __lr = await fetch(supabaseUrl + "/rest/v1/app_settings?key=eq.user_daily_limit&select=value", { headers: __H });
           var __lj = await __lr.json();
