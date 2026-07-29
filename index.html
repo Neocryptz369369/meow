@@ -1630,6 +1630,12 @@
                     <textarea id="admin-base-guidelines" style="width: 100%; height: 100px; background: #222; color: #fff; border: 1px solid var(--primary); padding: 5px;"></textarea>
                     <button class="btn" onclick="saveGuidelines()" style="width: 100%; margin-top: 5px;">SAVE GUIDELINES</button>
                 </div>
+                <div style="margin-top:18px; border-top:1px solid rgba(255,0,255,0.3); padding-top:14px;">
+                    <label style="display:block; font-weight:bold; color:#ff00ff; margin-bottom:4px;">SYSTEM PROMPT (RULES MATRIX)</label>
+                    <label style="display:block; font-size:12px; opacity:0.75; margin-bottom:6px;">Paste your permanent core instructions / Rules Matrix here. These become the AI's highest-priority rules and are placed at the very top of its system prompt.</label>
+                    <textarea id="admin-system-prompt" rows="10" style="width:100%; box-sizing:border-box; font-family:monospace; font-size:12px;" placeholder="=== RULES MATRIX ===&#10;1. ...&#10;2. ..."></textarea>
+                    <button onclick="saveSystemPrompt()" style="margin-top:8px;">SAVE SYSTEM PROMPT</button>
+                </div>
                     
                 <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 10px;">
                     <h4 style="color: var(--secondary);">BETA TESTER SYSTEM</h4>
@@ -3848,6 +3854,25 @@
                 : "Guidelines saved on this device. NOTE: backend sync failed \u2014 check that the app_settings write policy is enabled in Supabase.");
         }
 
+        async function saveSystemPrompt() {
+            const el = document.getElementById('admin-system-prompt');
+            const text = el ? el.value.trim() : '';
+            localStorage.setItem('adminSystemPrompt', text);
+            let backendOk = false;
+            try {
+                if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+                    const { error } = await supabaseClient
+                        .from('app_settings')
+                        .upsert({ key: 'system_prompt', value: text, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+                    if (!error) backendOk = true;
+                    else console.warn('System prompt Supabase save failed:', error);
+                }
+            } catch (e) { console.warn('System prompt Supabase save error:', e); }
+            alert(backendOk
+                ? 'System Prompt (Rules Matrix) saved and synced to the AI. It is now the top-priority core instruction.'
+                : 'System Prompt saved locally, but the cloud sync failed. Check your connection and try again.');
+        }
+
         function downloadChat() {
             const chatBox = document.getElementById('chat-window');
             const blob = new Blob([chatBox.innerText], { type: 'text/plain' });
@@ -4754,6 +4779,20 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
                         }
                     }
                 } catch (e) { console.warn('Guidelines load from Supabase failed:', e); }
+            }
+            // Load custom System Prompt (Rules Matrix) into the admin box
+            if (document.getElementById('admin-system-prompt')) {
+                document.getElementById('admin-system-prompt').value = localStorage.getItem('adminSystemPrompt') || '';
+                try {
+                    if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+                        const { data: spd } = await supabaseClient.from('app_settings').select('value').eq('key', 'system_prompt').single();
+                        if (spd && typeof spd.value === 'string') {
+                            localStorage.setItem('adminSystemPrompt', spd.value);
+                            const spEl = document.getElementById('admin-system-prompt');
+                            if (spEl) spEl.value = spd.value;
+                        }
+                    }
+                } catch (e) { console.warn('System prompt load from Supabase failed:', e); }
             }
 
             let feedbacks = JSON.parse(localStorage.getItem('globalFeedback') || '[]');
