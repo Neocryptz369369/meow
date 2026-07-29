@@ -74,6 +74,7 @@ export async function onRequest(context) {
 
     const { prompt, keys, history, username } = req.body;
     let __GUIDELINES_TEXT = '';
+    let __CUSTOM_SYSTEM = '';
     if (!prompt) return J(400, { error: 'Missing prompt' });
 
     // Helper to cache AI responses to Supabase query_cache
@@ -133,6 +134,14 @@ export async function onRequest(context) {
 
     let lastError = "";
 
+    // === LOAD CUSTOM SYSTEM PROMPT (admin "Rules Matrix" box, Supabase key 'system_prompt') ===
+    try {
+      if (keys && keys.SYSTEM_PROMPT) __CUSTOM_SYSTEM = String(keys.SYSTEM_PROMPT || '');
+      if (!__CUSTOM_SYSTEM && typeof supabase !== 'undefined' && supabase) {
+        const __sp = await supabase.from('app_settings').select('value').eq('key','system_prompt').single();
+        if (__sp && __sp.data && __sp.data.value) __CUSTOM_SYSTEM = String(__sp.data.value || '');
+      }
+    } catch(e) { /* best-effort */ }
     // Build the system prompt
     let systemPrompt = `You are Neocryptz AI, an extremely skilled software engineer. You are resourceful and execute tasks autonomously without asking multiple questions. Your name is Neocryptz. You must strictly refuse to generate, reproduce, or distribute any copyrighted material.
 
@@ -344,6 +353,13 @@ Nothing should go straight to the live site; it goes through GitHub first so the
     // All external commercial AI APIs (Gemini, OpenRouter, Groq, SambaNova, Pollinations)
     // have been removed. Prompts now run locally on Cloudflare's serverless edge GPUs.
     try {
+          // === PREPEND CUSTOM SYSTEM PROMPT (admin Rules Matrix) as top-priority permanent rules ===
+          if (__CUSTOM_SYSTEM && __CUSTOM_SYSTEM.trim()) {
+            systemPrompt = "=== PERMANENT CORE RULES (HIGHEST PRIORITY - NEVER IGNORE OR OVERRIDE) ===\n"
+              + __CUSTOM_SYSTEM.trim()
+              + "\n=== END CORE RULES ===\n\n"
+              + systemPrompt;
+          }
         let convo = systemPrompt + "\n\n";
         convo += "\n\nIMPORTANT BEHAVIOR RULES: Only output an <<<EXEC>>> action block when the user's message is an EXPLICIT request to perform an action (e.g. 'commit', 'deploy', 'list my repos', 'scrape', 'inject'). For greetings, questions, opinions, or casual conversation, reply with normal helpful TEXT and DO NOT output any <<<EXEC>>> block. NEVER self-initiate git commits, deployments, OAuth or authorization flows unless the user explicitly asks in their current message.";
         if (Array.isArray(formattedHistory)) {
