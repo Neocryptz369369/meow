@@ -272,8 +272,16 @@ Nothing should go straight to the live site; it goes through GitHub first so the
     if (keys && keys.BASE_GUIDELINES) {
     try { if (supabase) { const g = await supabase.from('app_settings').select('value').eq('key','base_guidelines').single(); if (g && g.data && g.data.value) { keys.BASE_GUIDELINES = g.data.value; } } } catch (e) {}
         systemPrompt += "\n\nCOMPANY BRAND GUIDELINES TO FOLLOW STRICTLY:\n" + keys.BASE_GUIDELINES;
-        try { __GUIDELINES_TEXT = String(keys.BASE_GUIDELINES || ''); } catch(e) { __GUIDELINES_TEXT = ''; }
+        try { if (keys && keys.BASE_GUIDELINES) __GUIDELINES_TEXT = String(keys.BASE_GUIDELINES || ""); } catch(e) {}
     }
+    // === ALWAYS-LOAD GUIDELINES (independent of frontend keys) ===
+    // The UI may not send BASE_GUIDELINES, so fetch it from Supabase directly for the rules engines.
+    try {
+      if (!__GUIDELINES_TEXT && typeof supabase !== 'undefined' && supabase) {
+        const __gg = await supabase.from('app_settings').select('value').eq('key','base_guidelines').single();
+        if (__gg && __gg.data && __gg.data.value) __GUIDELINES_TEXT = String(__gg.data.value || '');
+      }
+    } catch(e) { /* best-effort */ }
 
     if (keys && keys.LOCAL_SCRAPES && keys.LOCAL_SCRAPES.length > 0) {
         systemPrompt += "\n\nCRITICAL CONTEXT FROM SYSTEM SCRAPER:\n";
