@@ -377,6 +377,33 @@ Nothing should go straight to the live site; it goes through GitHub first so the
 const aiResp = await env.AI.run('@cf/meta/llama-3.1-8b-instruct-fast', { messages: [{ role: 'user', content: convo }] });
 
         let text = (aiResp && (aiResp.response !== undefined ? aiResp.response : aiResp.result)) || "";
+        // === LEAK SCRUBBER: strip system-prompt mode-narration that the model sometimes echoes ===
+        // The small model occasionally writes out its mode-selection reasoning (e.g. "=== PERMANENT
+        // CORE RULES ===", "User input:", "Trigger phrase:", "=== ... MODE ===", "Response:") before
+        // the real answer. This removes that scaffolding at the code level (no reliance on the model).
+        try {
+          if (typeof text === "string" && text) {
+            var __t = text;
+            // A) If the model prefixed its real answer with a "Response:/Answer:/Output:" label,
+            //    keep only what comes AFTER the last such label (that is the actual reply).
+            var __rl = new RegExp("(?:^|\n)\s*(?:Response|Final Response|Answer|Output)\s*:\s*", "gi");
+            var __lastIdx = -1, __mm;
+            while ((__mm = __rl.exec(__t)) !== null) { __lastIdx = __rl.lastIndex; }
+            if (__lastIdx > -1) { __t = __t.slice(__lastIdx); }
+            // B) Remove any "=== ... ===" banner lines (CORE RULES / MODE headers / END CORE RULES).
+            __t = __t.replace(new RegExp("^\s*={2,}[^\n]*={2,}\s*$", "gm"), "");
+            // C) Remove leaked narration lines (with or without a trailing colon).
+            var __lead = ["User\s?\S* input","Trigger phrase","Required Action","Strict Constraints","Selected mode","Mode selection","Operational mode"];
+            __t = __t.replace(new RegExp("^\s*(?:" + __lead.join("|") + ")\s*:?.*$", "gim"), "");
+            // D) Remove colon-less meta sentences the model uses to announce mode selection.
+            __t = __t.replace(new RegExp("^\s*Based on the user\S* input[^\n]*$", "gim"), "");
+            __t = __t.replace(new RegExp("^\s*(?:I will|I\S+ll) (?:respond|evaluate|select)[^\n]*$", "gim"), "");
+            // E) Collapse leftover blank lines and trim leading whitespace/newlines.
+            __t = __t.replace(new RegExp("(?:\r?\n){2,}", "g"), NL + NL).replace(new RegExp("^\s+"), "");
+            if (__t && __t.trim().length > 0) { text = __t.trim(); }
+          }
+        } catch (__ls) { /* best-effort; never block the response */ }
+
         // SAFETY GUARD: only allow tool-action (<<<EXEC>>>) execution when the user's
         // current message explicitly requests an action. Otherwise strip EXEC blocks so
         // the agent replies as plain text and never self-initiates commits/deploys/OAuth.
