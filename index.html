@@ -6410,7 +6410,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
     setTimeout(async () => {
         setupSupportRealtime();
         requestNotificationPermission(); // Ask all users (admin and regular) for notification permission
-        if (currentUser && !currentUser.is_admin) {
+        if ((typeof currentUser !== "undefined" && currentUser) && !currentUser.is_admin) {
             const uid = await getSupportUid();
             if (uid) loadSupportMessages(uid, false);
         }
