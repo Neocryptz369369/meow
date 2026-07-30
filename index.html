@@ -1787,6 +1787,7 @@
   try { if (typeof supabaseClient !== 'undefined' && supabaseClient) { window.supabaseClient = supabaseClient; } } catch(e){}
 
         let currentUser = null;
+        try { window.currentUser = currentUser; } catch(e){}
         let session_id = uuidv4();
         let token = localStorage.getItem('token');
 
@@ -1909,6 +1910,7 @@
             if (session || localUser) {
                 if (session) {
                     currentUser = userProfile || {
+                    try { window.currentUser = currentUser; } catch(e){}
                         username: session.user.email.split('@')[0],
                         plan: "Power",
                         credits: 999999,
@@ -1918,6 +1920,7 @@
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 } else {
                     currentUser = JSON.parse(localUser);
+                    try { window.currentUser = currentUser; } catch(e){}
                 }
 
                 document.getElementById('auth-screen').style.display = 'none';
