@@ -1775,6 +1775,7 @@
         let supabaseClient = null; try { supabaseClient = window.supabase.createClient(_supabaseUrl, _supabaseAnonKey, {
             auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: 'ncai-auth' }
         }); } catch(e) { console.warn("Supabase init failed:", e); }
+  try { if (typeof supabaseClient !== 'undefined' && supabaseClient) { window.supabaseClient = supabaseClient; } } catch(e){}
 
         let currentUser = null;
         let session_id = uuidv4();
@@ -5429,7 +5430,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
     }
 
     function setupSupportRealtime() {
-        if (!supabaseClient) return;
+        if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
 
         supabaseClient
             .channel('support_messages')
