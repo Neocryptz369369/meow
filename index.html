@@ -1504,6 +1504,15 @@
             <div id="admin-tiktok" class="admin-tab" style="display:none;">
                 <h3 style="color:#ff0050; text-transform: uppercase; letter-spacing: 2px;">TikTok Affiliate Display & Management</h3>
                 <p style="font-size:0.8em; color:#aaa; margin-bottom: 20px;">Manage direct, non-tracking TikTok Shop Affiliate cards rendered during the 1-minute cooldown screen.</p>
+                <div id="tk-rotation-box" style="margin:10px 0 14px 0;padding:10px;border:1px solid #0ff6;border-radius:8px;">
+                    <label for="tk-rotation-seconds" style="display:block;margin-bottom:6px;font-size:13px;color:#0ff;">Ad Rotation Timing (seconds)</label>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="number" id="tk-rotation-seconds" min="2" max="600" step="1" value="15" style="width:100px;padding:6px;background:#000;color:#0ff;border:1px solid #0ff8;border-radius:6px;">
+                        <button type="button" id="tk-rotation-save" onclick="saveTikTokRotation()" class="btn" style="padding:6px 14px;">Save Rotation</button>
+                        <span id="tk-rotation-status" style="font-size:12px;color:#8f8;"></span>
+                    </div>
+                    <p style="margin:6px 0 0 0;font-size:11px;color:#888;">How often the sidebar ads rotate. Applies live on all visitors.</p>
+                </div>
                 
                 <div style="margin-bottom: 30px; padding: 25px; border: 1px solid #ff0050; background: #0a0a0a; border-radius: 12px; max-width: 600px; box-shadow: 0 0 15px rgba(255, 0, 80, 0.2);">
                     <h4 style="margin-top:0; color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px;">Add / Edit TikTok Product</h4>
@@ -3886,6 +3895,28 @@
                 alert("Could not save limit: " + (e && e.message ? e.message : e));
             }
         }
+        /* NEOCRYPTZ_ROT: TikTok ad rotation-timing setting (admin-controlled) */
+        async function saveTikTokRotation(){
+            try {
+                var inp = document.getElementById("tk-rotation-seconds");
+                var st = document.getElementById("tk-rotation-status");
+                var secs = parseInt(inp && inp.value, 10);
+                if(!secs || secs < 2) secs = 2;
+                if(secs > 600) secs = 600;
+                if(st) st.textContent = "Saving...";
+                await supabaseClient.from("app_settings").upsert({ key: "tiktok_rotation_seconds", value: String(secs), updated_at: new Date().toISOString() }, { onConflict: "key" });
+                if(st) st.textContent = "Saved (" + secs + "s)";
+                try { window.__nzRotationSeconds = secs; } catch(e){}
+            } catch(e){ var st2=document.getElementById("tk-rotation-status"); if(st2) st2.textContent = "Save failed"; }
+        }
+        async function loadTikTokRotation(){
+            try {
+                var res = await supabaseClient.from("app_settings").select("value").eq("key","tiktok_rotation_seconds").maybeSingle();
+                var v = res && res.data ? parseInt(res.data.value,10) : 0;
+                if(v && v>=2){ var inp=document.getElementById("tk-rotation-seconds"); if(inp) inp.value = v; }
+            } catch(e){}
+        }
+        try { document.addEventListener("DOMContentLoaded", loadTikTokRotation); } catch(e){}
 
         function downloadChat() {
             const chatBox = document.getElementById('chat-window');
@@ -6712,7 +6743,20 @@ function startAdCooldown(seconds, btn) {
     if(document.readyState==="loading"){ document.addEventListener("DOMContentLoaded", boot); }
     else { boot(); }
     setInterval(load, 300000);
-    setInterval(function(){ try{ if(pool.length){ rot=(rot+SLOTS.length)%(pool.length||1); paint(); } }catch(e){} }, 15000);
+    /* rotation timing is admin-controlled via app_settings.tiktok_rotation_seconds (default 15s) */
+    var ROT_MS = 15000;
+    function loadRotSetting(){
+      try {
+        if(window.supabaseClient && window.supabaseClient.from){
+          window.supabaseClient.from("app_settings").select("value").eq("key","tiktok_rotation_seconds").maybeSingle()
+            .then(function(res){ try { var v = res && res.data ? parseInt(res.data.value,10) : 0; if(v && v>=2 && v<=600){ ROT_MS = v*1000; } } catch(e){} })
+            .catch(function(){});
+        }
+      } catch(e){}
+    }
+    loadRotSetting();
+    setInterval(loadRotSetting, 60000);
+    (function tick(){ try{ if(pool.length){ rot=(rot+SLOTS.length)%(pool.length||1); paint(); } }catch(e){} setTimeout(tick, ROT_MS); })();
     setTimeout(boot, 800); setTimeout(boot, 2500);
   } catch(e){}
 })();
