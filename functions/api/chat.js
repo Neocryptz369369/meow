@@ -1,3 +1,4 @@
+// redeploy trigger 2026-07-30T13:36:40
 // Cloudflare Pages Function: /api/chat
 function J(status, body){ return new Response(JSON.stringify(body), { status: status||200, headers: { 'Content-Type':'application/json', 'Cache-Control':'no-store' } }); }
 
