@@ -18,18 +18,19 @@ export async function onRequest(context) {
     GITHUB_TOKEN: env.GITHUB_TOKEN || env.GH_TOKEN || '',
     VERCEL_TOKEN: env.VERCEL_TOKEN || ''
   };
-  // --- Auto-fill Supabase creds from any similarly-shaped env var (name-agnostic fallback) ---
+  // --- Force valid Supabase creds from any similarly-shaped env var (name-agnostic) ---
   try {
     var __ek = Object.keys(env || {});
-    if (!ENV.SUPABASE_URL) {
-      for (var i=0;i<__ek.length;i++){ var v=env[__ek[i]]; if (typeof v==="string" && /^https:\/\/[a-z0-9-]+\.supabase\.co/i.test(v)) { ENV.SUPABASE_URL=v; break; } }
-    }
+    var __urlLooks = function(v){ return typeof v==="string" && /^https:\/\/[a-z0-9-]+\.supabase\.co/i.test(v); };
     var __keyLooks = function(v){ return typeof v==="string" && (/^eyJ[A-Za-z0-9_-]{20,}\./.test(v) || /^sb_(secret|publishable)_/.test(v)); };
-    if (!ENV.SUPABASE_SERVICE_ROLE_KEY) {
-      for (var j=0;j<__ek.length;j++){ var vv=env[__ek[j]]; if (__keyLooks(vv)) { ENV.SUPABASE_SERVICE_ROLE_KEY=vv; break; } }
+    if (!__urlLooks(ENV.SUPABASE_URL)) {
+      for (var i=0;i<__ek.length;i++){ if (__urlLooks(env[__ek[i]])) { ENV.SUPABASE_URL=env[__ek[i]]; break; } }
     }
-    if (!ENV.SUPABASE_KEY) {
-      for (var m=0;m<__ek.length;m++){ var vm=env[__ek[m]]; if (__keyLooks(vm)) { ENV.SUPABASE_KEY=vm; break; } }
+    if (!__keyLooks(ENV.SUPABASE_SERVICE_ROLE_KEY)) {
+      for (var j=0;j<__ek.length;j++){ if (__keyLooks(env[__ek[j]])) { ENV.SUPABASE_SERVICE_ROLE_KEY=env[__ek[j]]; break; } }
+    }
+    if (!__keyLooks(ENV.SUPABASE_KEY)) {
+      for (var m=0;m<__ek.length;m++){ if (__keyLooks(env[__ek[m]])) { ENV.SUPABASE_KEY=env[__ek[m]]; break; } }
     }
   } catch(__e) { /* auto-detect best effort */ }
 
