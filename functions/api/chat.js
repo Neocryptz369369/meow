@@ -8,8 +8,8 @@ export async function onRequest(context) {
   const env = context.env;
   const ENV = {
     SUPABASE_URL: env.SUPABASE_URL || env.neocryptz_final_url || '',
-    SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_KEY || '',
-    SUPABASE_KEY: env.SUPABASE_KEY || env.neocryptz_final_anon || '',
+    SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_KEY || env.SUPABASE_ANON_KEY || env.neocryptz_final_anon || env.NEOCRYPTZ_FINAL_ANON || env.neocryptz_final_supabase_anon || "",
+    SUPABASE_KEY: env.SUPABASE_KEY || env.SUPABASE_ANON_KEY || env.neocryptz_final_anon || env.NEOCRYPTZ_FINAL_ANON || env.neocryptz_final_supabase_anon || "",
     GOOGLE_API_KEY: env.GOOGLE_API_KEY || '',
     OPENROUTER_API_KEY: env.OPENROUTER_API_KEY || '',
     POLLINATIONS_API_KEY: env.POLLINATIONS_API_KEY || '',
@@ -18,6 +18,21 @@ export async function onRequest(context) {
     GITHUB_TOKEN: env.GITHUB_TOKEN || env.GH_TOKEN || '',
     VERCEL_TOKEN: env.VERCEL_TOKEN || ''
   };
+  // --- Auto-fill Supabase creds from any similarly-shaped env var (name-agnostic fallback) ---
+  try {
+    var __ek = Object.keys(env || {});
+    if (!ENV.SUPABASE_URL) {
+      for (var i=0;i<__ek.length;i++){ var v=env[__ek[i]]; if (typeof v==="string" && /^https:\/\/[a-z0-9-]+\.supabase\.co/i.test(v)) { ENV.SUPABASE_URL=v; break; } }
+    }
+    var __keyLooks = function(v){ return typeof v==="string" && (/^eyJ[A-Za-z0-9_-]{20,}\./.test(v) || /^sb_(secret|publishable)_/.test(v)); };
+    if (!ENV.SUPABASE_SERVICE_ROLE_KEY) {
+      for (var j=0;j<__ek.length;j++){ var vv=env[__ek[j]]; if (__keyLooks(vv)) { ENV.SUPABASE_SERVICE_ROLE_KEY=vv; break; } }
+    }
+    if (!ENV.SUPABASE_KEY) {
+      for (var m=0;m<__ek.length;m++){ var vm=env[__ek[m]]; if (__keyLooks(vm)) { ENV.SUPABASE_KEY=vm; break; } }
+    }
+  } catch(__e) { /* auto-detect best effort */ }
+
   const __SB_URL = (ENV.SUPABASE_URL||'').replace(/[/]+$/,'');
   const __SB_KEY = ENV.SUPABASE_SERVICE_ROLE_KEY || ENV.SUPABASE_KEY;
   function createClient(){
