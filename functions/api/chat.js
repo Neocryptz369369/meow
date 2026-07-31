@@ -6,44 +6,6 @@ function J(status, body){ return new Response(JSON.stringify(body), { status: st
 export async function onRequest(context) {
   const request = context.request;
   const env = context.env;
-  // TEMP DIAGNOSTIC (safe: shapes only, no secret values)
-  try {
-    if (request.method === "POST") {
-      var __dbgBody = null;
-      try { __dbgBody = await request.clone().json(); } catch(e){}
-      if (__dbgBody && __dbgBody.debug_key === "NEOCRYPTZ_DIAG_9271") {
-        var __keys = Object.keys(env||{});
-        var __shape = {};
-        __keys.forEach(function(k){ var v=env[k]; __shape[k] = (typeof v==="string") ? (v.length===0?"EMPTY":(v.slice(0,4)+"...len"+v.length)) : (typeof v); });
-        // Resolve creds like the app does
-        var __u = env.SUPABASE_URL || env.neocryptz_final_url || "";
-        var __k = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_KEY || env.neocryptz_final_anon || "";
-        __u = String(__u).replace(/[/]+$/,"");
-        var __H = { "apikey": __k, "Authorization": "Bearer " + __k, "Content-Type": "application/json" };
-        var __testUser = "diagwrite_" + Math.random().toString(36).slice(2,7);
-        var __today2 = new Date().toISOString().slice(0,10);
-        var __rd, __rdStatus, __rdBody, __wr, __wrStatus, __wrBody;
-        try {
-          __rd = await fetch(__u + "/rest/v1/daily_usage?select=count&username=eq." + encodeURIComponent(__testUser), { headers: __H });
-          __rdStatus = __rd.status; __rdBody = (await __rd.text()).slice(0,200);
-        } catch(e1){ __rdBody = "READ_EX:" + (e1&&e1.message); }
-        try {
-          __wr = await fetch(__u + "/rest/v1/daily_usage", { method:"POST", headers: Object.assign({Prefer:"return=representation"}, __H), body: JSON.stringify([{username:__testUser, usage_date:__today2, count:1}]) });
-          __wrStatus = __wr.status; __wrBody = (await __wr.text()).slice(0,300);
-        } catch(e2){ __wrBody = "WRITE_EX:" + (e2&&e2.message); }
-        // Evaluate guard exactly as the enforcement block does
-        var __gIsAdmin = __dbgBody && (__dbgBody.is_admin === true || __dbgBody.is_admin === "true");
-        var __gUname = (__dbgBody && __dbgBody.probe_username) ? String(__dbgBody.probe_username).trim() : "";
-        var __gSupaUrl = ENV.SUPABASE_URL;
-        var __gSupaKey = ENV.SUPABASE_SERVICE_ROLE_KEY || ENV.SUPABASE_KEY;
-        var __guardPass = (!__gIsAdmin && !!__gUname && !!__gSupaUrl && !!__gSupaKey);
-        // read limit from app_settings
-        var __limStatus, __limBody;
-        try { var __lr = await fetch(__u + "/rest/v1/app_settings?select=value&key=eq.user_daily_limit", { headers: __H }); __limStatus=__lr.status; __limBody=(await __lr.text()).slice(0,120); } catch(le){ __limBody="LIM_EX:"+(le&&le.message); }
-        return J(200, { diag:true, urlLen:__u.length, keyPrefix: String(__k).slice(0,4), keyLen: String(__k).length, readStatus:__rdStatus, readBody:__rdBody, writeStatus:__wrStatus, writeBody:__wrBody, guard:{ isAdmin:__gIsAdmin, uname:__gUname, hasSupaUrl:!!__gSupaUrl, hasSupaKey:!!__gSupaKey, guardPass:__guardPass }, limitSetting:{ status:__limStatus, body:__limBody } });
-      }
-    }
-  } catch(__de) { return J(200, {diag:true, diagError:String(__de&&__de.message)}); }
   const ENV = {
     SUPABASE_URL: env.SUPABASE_URL || env.neocryptz_final_url || '',
     SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_KEY || env.SUPABASE_ANON_KEY || env.neocryptz_final_anon || env.NEOCRYPTZ_FINAL_ANON || env.neocryptz_final_supabase_anon || "",
@@ -162,6 +124,13 @@ export async function onRequest(context) {
     try {
       var __isAdmin = (body && (body.is_admin === true || body.is_admin === "true"));
       var __uname = (body && body.username) ? String(body.username).trim() : "";
+      // TEMP DIAG2: evaluate real guard vars
+      try {
+        var __db2=null; try{ __db2=await request.clone().json(); }catch(e){}
+        if (__db2 && __db2.debug_key==="NEOCRYPTZ_DIAG_9271") {
+          return J(200, { diag2:true, isAdmin: !!__isAdmin, uname: __uname, unameTruthy: !!__uname, hasUrl: !!supabaseUrl, urlVal: String(supabaseUrl).slice(0,30), hasKey: !!supabaseKey, keyPrefix: String(supabaseKey).slice(0,4), keyLen: String(supabaseKey||"").length, guardPass: (!__isAdmin && !!__uname && !!supabaseUrl && !!supabaseKey) });
+        }
+      } catch(__d2e) { return J(200, {diag2:true, err:String(__d2e&&__d2e.message)}); }
       if (!__isAdmin && __uname && supabaseUrl && supabaseKey) {
         var __H = { "apikey": supabaseKey, "Authorization": "Bearer " + supabaseKey, "Content-Type": "application/json" };
         // 1) read the admin-configured limit (default 100)
