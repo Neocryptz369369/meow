@@ -3986,54 +3986,6 @@
             }
         }
         
-        async function requestSplitView() {
-            const input = document.getElementById('message-input');
-            let msg = input.value.trim();
-            if (!msg) return alert("Enter a prompt first to generate A/B split variations.");
-            
-            input.value = '';
-            appendMessage('user', "[A/B SPLIT REQUEST]: " + msg);
-            appendMessage('assistant', "Generating Option A and Option B...");
-            
-            try {
-                const res = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        prompt: "Provide 2 totally different style variations for the following prompt. Format exactly like this:\n\n[OPTION A]: (text)\n\n[OPTION B]: (text)\n\nPrompt: " + msg,
-                        keys: { PROVIDER_ORDER: "sambanova,groq,gemini" }
-                    })
-                });
-                const data = await res.json();
-                
-                const win = document.getElementById('chat-window');
-                const div = document.createElement('div');
-                div.className = `message assistant neon-border`;
-                div.style.display = 'flex';
-                div.style.gap = '10px';
-                
-                let text = data.result || '';
-                let parts = text.split('[OPTION B]:');
-                let optA = parts[0] ? parts[0].replace('[OPTION A]:', '').trim() : text;
-                let optB = parts[1] ? parts[1].trim() : '';
-                
-                div.innerHTML = `
-                    <div style="flex:1; border-right:1px dashed var(--primary); padding-right:10px;">
-                        <h4 style="color:var(--primary); margin-top:0;">OPTION A</h4>
-                        <p>${escapeHtml(optA)}</p>
-                    </div>
-                    <div style="flex:1; padding-left:10px;">
-                        <h4 style="color:var(--secondary); margin-top:0;">OPTION B</h4>
-                        <p>${escapeHtml(optB)}</p>
-                    </div>
-                `;
-                win.appendChild(div);
-                win.scrollTop = win.scrollHeight;
-                
-            } catch(e) {
-                appendMessage('assistant', "Split-View Error: " + e.message);
-            }
-        }
         function generateCanvas() {
             const b1 = document.getElementById('canvas-1').value.trim();
             const b2 = document.getElementById('canvas-2').value.trim();
@@ -4046,17 +3998,6 @@
             document.getElementById('message-input').focus();
         }
         
-        function generateCanvas() {
-            const b1 = document.getElementById('canvas-1').value.trim();
-            const b2 = document.getElementById('canvas-2').value.trim();
-            const b3 = document.getElementById('canvas-3').value.trim();
-            if(!b1 || !b2 || !b3) return alert("Fill in all boxes!");
-            
-            const prompt = `${b1} aimed at ${b2}. ${b3}.`;
-            document.getElementById('message-input').value = prompt;
-            document.getElementById('canvas-modal').style.display = 'none';
-            document.getElementById('message-input').focus();
-        }
         async function runPolisher() {
             const input = document.getElementById('polish-input').value.trim();
             if(!input) return;
