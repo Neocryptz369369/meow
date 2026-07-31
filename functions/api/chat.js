@@ -6,14 +6,6 @@ function J(status, body){ return new Response(JSON.stringify(body), { status: st
 export async function onRequest(context) {
   const request = context.request;
   const env = context.env;
-  // TEMP SHA DIAG (top-level)
-  try {
-    if (request.method==="POST") {
-      var __sb=null; try{ __sb=await request.clone().json(); }catch(e){}
-      if (__sb && __sb.debug_key==="NEOCRYPTZ_SHA_5")
-        return J(200, { shaDiag:true, commit: env.CF_PAGES_COMMIT_SHA || "none", branch: env.CF_PAGES_BRANCH || "none" });
-    }
-  } catch(__se){}
   const ENV = {
     SUPABASE_URL: env.SUPABASE_URL || env.neocryptz_final_url || '',
     SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_KEY || env.SUPABASE_ANON_KEY || env.neocryptz_final_anon || env.NEOCRYPTZ_FINAL_ANON || env.neocryptz_final_supabase_anon || "",
@@ -130,15 +122,8 @@ export async function onRequest(context) {
     // Regular users (is_admin !== true) are capped at a daily number set in
     // app_settings.user_daily_limit (default 100). Counts live in the daily_usage table.
     try {
-      var __isAdmin = (body && (body.is_admin === true || body.is_admin === "true"));
-      var __uname = (body && body.username) ? String(body.username).trim() : "";
-      // TEMP DIAG2: evaluate real guard vars
-      try {
-        var __db2=null; try{ __db2=await request.clone().json(); }catch(e){}
-        if (__db2 && __db2.debug_key==="NEOCRYPTZ_DIAG_9271") {
-          return J(200, { diag2:true, isAdmin: !!__isAdmin, uname: __uname, unameTruthy: !!__uname, hasUrl: !!supabaseUrl, urlVal: String(supabaseUrl).slice(0,30), hasKey: !!supabaseKey, keyPrefix: String(supabaseKey).slice(0,4), keyLen: String(supabaseKey||"").length, guardPass: (!__isAdmin && !!__uname && !!supabaseUrl && !!supabaseKey) });
-        }
-      } catch(__d2e) { return J(200, {diag2:true, err:String(__d2e&&__d2e.message)}); }
+      var __isAdmin = (req.body && (req.body.is_admin === true || req.body.is_admin === "true"));
+      var __uname = (req.body && req.body.username) ? String(req.body.username).trim() : "";
       if (!__isAdmin && __uname && supabaseUrl && supabaseKey) {
         var __H = { "apikey": supabaseKey, "Authorization": "Bearer " + supabaseKey, "Content-Type": "application/json" };
         // 1) read the admin-configured limit (default 100)
