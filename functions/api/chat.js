@@ -6,6 +6,19 @@ function J(status, body){ return new Response(JSON.stringify(body), { status: st
 export async function onRequest(context) {
   const request = context.request;
   const env = context.env;
+  // TEMP DIAGNOSTIC (safe: shapes only, no secret values)
+  try {
+    if (request.method === "POST") {
+      var __dbgBody = null;
+      try { __dbgBody = await request.clone().json(); } catch(e){}
+      if (__dbgBody && __dbgBody.debug_key === "NEOCRYPTZ_DIAG_9271") {
+        var __keys = Object.keys(env||{});
+        var __shape = {};
+        __keys.forEach(function(k){ var v=env[k]; __shape[k] = (typeof v==="string") ? (v.length===0?"EMPTY":(v.slice(0,4)+"...len"+v.length)) : (typeof v); });
+        return J(200, { diag:true, envKeyNames:__keys, envShapes:__shape });
+      }
+    }
+  } catch(__de) { return J(200, {diag:true, diagError:String(__de&&__de.message)}); }
   const ENV = {
     SUPABASE_URL: env.SUPABASE_URL || env.neocryptz_final_url || '',
     SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_KEY || env.SUPABASE_ANON_KEY || env.neocryptz_final_anon || env.NEOCRYPTZ_FINAL_ANON || env.neocryptz_final_supabase_anon || "",
