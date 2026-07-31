@@ -4774,7 +4774,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
                         localStorage.setItem("userDailyLimit", String(uv));
                     }
                 }
-            } catch (e) { console.warn("User limit load failed", e); }
+            catch (e) { console.warn("User limit load failed", e); }
 
             let feedbacks = JSON.parse(localStorage.getItem('globalFeedback') || '[]');
             let fbHtml = '';
