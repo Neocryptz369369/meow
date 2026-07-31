@@ -31,7 +31,16 @@ export async function onRequest(context) {
           __wr = await fetch(__u + "/rest/v1/daily_usage", { method:"POST", headers: Object.assign({Prefer:"return=representation"}, __H), body: JSON.stringify([{username:__testUser, usage_date:__today2, count:1}]) });
           __wrStatus = __wr.status; __wrBody = (await __wr.text()).slice(0,300);
         } catch(e2){ __wrBody = "WRITE_EX:" + (e2&&e2.message); }
-        return J(200, { diag:true, urlLen:__u.length, keyPrefix: String(__k).slice(0,4), keyLen: String(__k).length, readStatus:__rdStatus, readBody:__rdBody, writeStatus:__wrStatus, writeBody:__wrBody });
+        // Evaluate guard exactly as the enforcement block does
+        var __gIsAdmin = __dbgBody && (__dbgBody.is_admin === true || __dbgBody.is_admin === "true");
+        var __gUname = (__dbgBody && __dbgBody.probe_username) ? String(__dbgBody.probe_username).trim() : "";
+        var __gSupaUrl = ENV.SUPABASE_URL;
+        var __gSupaKey = ENV.SUPABASE_SERVICE_ROLE_KEY || ENV.SUPABASE_KEY;
+        var __guardPass = (!__gIsAdmin && !!__gUname && !!__gSupaUrl && !!__gSupaKey);
+        // read limit from app_settings
+        var __limStatus, __limBody;
+        try { var __lr = await fetch(__u + "/rest/v1/app_settings?select=value&key=eq.user_daily_limit", { headers: __H }); __limStatus=__lr.status; __limBody=(await __lr.text()).slice(0,120); } catch(le){ __limBody="LIM_EX:"+(le&&le.message); }
+        return J(200, { diag:true, urlLen:__u.length, keyPrefix: String(__k).slice(0,4), keyLen: String(__k).length, readStatus:__rdStatus, readBody:__rdBody, writeStatus:__wrStatus, writeBody:__wrBody, guard:{ isAdmin:__gIsAdmin, uname:__gUname, hasSupaUrl:!!__gSupaUrl, hasSupaKey:!!__gSupaKey, guardPass:__guardPass }, limitSetting:{ status:__limStatus, body:__limBody } });
       }
     }
   } catch(__de) { return J(200, {diag:true, diagError:String(__de&&__de.message)}); }
