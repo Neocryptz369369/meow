@@ -4769,7 +4769,7 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
                 if (typeof supabaseClient !== "undefined") {
                     const { data: uld } = await supabaseClient.from("app_settings").select("value").eq("key", "user_daily_limit").maybeSingle();
                     const ulEl = document.getElementById("admin-user-limit");
-                    if (ulEl)                         let uv = (uld && uld.value != null) ? parseInt(String(uld.value).replace(/[^0-9]/g, ""), 10) : 100;                        if (isNaN(uv) || uv < 0) uv = 100;50;
+                    if (ulEl) {                          let uv = (uld && uld.value != null) ? parseInt(String(uld.value).replace(/[^0-9]/g, ""), 10) : 100; }                         if (isNaN(uv) || uv < 0) uv = 100;50;
                         ulEl.value = uv;
                         localStorage.setItem("userDailyLimit", String(uv));
                     }
