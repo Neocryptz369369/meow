@@ -4019,26 +4019,6 @@
             }
         }
         
-        async function runPolisher() {
-            const input = document.getElementById('polish-input').value.trim();
-            if(!input) return;
-            document.getElementById('polish-output').innerText = "Polishing...";
-            
-            try {
-                const res = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        prompt: "Fix all grammar errors and improve the vocabulary of this text: " + input,
-                        keys: { PROVIDER_ORDER: "sambanova,groq,gemini" }
-                    })
-                });
-                const data = await res.json();
-                document.getElementById('polish-output').innerText = data.result || "Error";
-            } catch(e) {
-                document.getElementById('polish-output').innerText = "Network Error";
-            }
-        }
                 function checkMacros() {
             const input = document.getElementById('message-input');
             let val = input.value;
