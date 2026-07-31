@@ -6603,11 +6603,11 @@ function startAdCooldown(seconds, btn) {
 <script>(function(){var origRequest=window.requestPlatformAuth;var origConfirm=window.confirmPlatformAuth;window.requestPlatformAuth=function(platform,callback){try{if(platform&&localStorage.getItem('authToken_'+platform)){if(typeof callback==='function'){return callback();}return;}}catch(e){}return origRequest.apply(this,arguments);};window.confirmPlatformAuth=function(){var platform=window._platformAuthName;var result=origConfirm.apply(this,arguments);try{if(platform&&!localStorage.getItem('authToken_'+platform)){localStorage.setItem('authToken_'+platform,'connected');localStorage.setItem('authToken_'+platform+'_at',new Date().toISOString());}}catch(e){}return result;};})();</script>
 <style id="NEOCRYPTZ_AD_GUARD_STYLE">
 /* Prevent placeholder/ticker flash: hide slot contents until real ads paint */
-#ad-1, #sidebar-tiktok-slot-2, #sidebar-tiktok-slot-3, #sidebar-tiktok-slot-4 { position:relative; }
+#ad-1, #ad-2, #ad-3, #ad-4 { position:relative; }
 #ad-1:not(.nz-ad-ready) > *:not(.nz-ad),
-#sidebar-tiktok-slot-2:not(.nz-ad-ready) > *:not(.nz-ad),
-#sidebar-tiktok-slot-3:not(.nz-ad-ready) > *:not(.nz-ad),
-#sidebar-tiktok-slot-4:not(.nz-ad-ready) > *:not(.nz-ad) { opacity:0 !important; }
+#ad-2:not(.nz-ad-ready) > *:not(.nz-ad),
+#ad-3:not(.nz-ad-ready) > *:not(.nz-ad),
+#ad-4:not(.nz-ad-ready) > *:not(.nz-ad) { opacity:0 !important; }
 .nz-ad { display:block; width:100%; height:100%; }
 .nz-ad img { width:100%; height:100%; object-fit:cover; display:block; }
 </style>
@@ -6616,7 +6616,7 @@ function startAdCooldown(seconds, btn) {
    Keeps the 4 ad slots filled from /api/recommendations/active, never blank,
    and removes the placeholder/ticker flash on load. Fully isolated in try/catch. */
 (function(){
-  var SLOTS = ["ad-1","sidebar-tiktok-slot-2","sidebar-tiktok-slot-3","sidebar-tiktok-slot-4"];
+  var SLOTS = ["ad-1","ad-2","ad-3","ad-4"];
   var pool = [];
   var rot = 0;
   function paint(){
