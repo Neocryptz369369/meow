@@ -15,7 +15,23 @@ export async function onRequest(context) {
         var __keys = Object.keys(env||{});
         var __shape = {};
         __keys.forEach(function(k){ var v=env[k]; __shape[k] = (typeof v==="string") ? (v.length===0?"EMPTY":(v.slice(0,4)+"...len"+v.length)) : (typeof v); });
-        return J(200, { diag:true, envKeyNames:__keys, envShapes:__shape });
+        // Resolve creds like the app does
+        var __u = env.SUPABASE_URL || env.neocryptz_final_url || "";
+        var __k = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_KEY || env.neocryptz_final_anon || "";
+        __u = String(__u).replace(/[/]+$/,"");
+        var __H = { "apikey": __k, "Authorization": "Bearer " + __k, "Content-Type": "application/json" };
+        var __testUser = "diagwrite_" + Math.random().toString(36).slice(2,7);
+        var __today2 = new Date().toISOString().slice(0,10);
+        var __rd, __rdStatus, __rdBody, __wr, __wrStatus, __wrBody;
+        try {
+          __rd = await fetch(__u + "/rest/v1/daily_usage?select=count&username=eq." + encodeURIComponent(__testUser), { headers: __H });
+          __rdStatus = __rd.status; __rdBody = (await __rd.text()).slice(0,200);
+        } catch(e1){ __rdBody = "READ_EX:" + (e1&&e1.message); }
+        try {
+          __wr = await fetch(__u + "/rest/v1/daily_usage", { method:"POST", headers: Object.assign({Prefer:"return=representation"}, __H), body: JSON.stringify([{username:__testUser, usage_date:__today2, count:1}]) });
+          __wrStatus = __wr.status; __wrBody = (await __wr.text()).slice(0,300);
+        } catch(e2){ __wrBody = "WRITE_EX:" + (e2&&e2.message); }
+        return J(200, { diag:true, urlLen:__u.length, keyPrefix: String(__k).slice(0,4), keyLen: String(__k).length, readStatus:__rdStatus, readBody:__rdBody, writeStatus:__wrStatus, writeBody:__wrBody });
       }
     }
   } catch(__de) { return J(200, {diag:true, diagError:String(__de&&__de.message)}); }
