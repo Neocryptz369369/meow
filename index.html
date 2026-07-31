@@ -1910,12 +1910,12 @@
             if (session || localUser) {
                 if (session) {
                     currentUser = userProfile || {
-                    try { window.currentUser = currentUser; } catch(e){}
                         username: session.user.email.split('@')[0],
                         plan: "Power",
                         credits: 999999,
                         is_admin: true
                     };
+                    try { window.currentUser = currentUser; } catch(e){}
                     localStorage.setItem('token', session.access_token);
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 } else {
