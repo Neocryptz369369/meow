@@ -6,6 +6,14 @@ function J(status, body){ return new Response(JSON.stringify(body), { status: st
 export async function onRequest(context) {
   const request = context.request;
   const env = context.env;
+  // TEMP SHA DIAG (top-level)
+  try {
+    if (request.method==="POST") {
+      var __sb=null; try{ __sb=await request.clone().json(); }catch(e){}
+      if (__sb && __sb.debug_key==="NEOCRYPTZ_SHA_5")
+        return J(200, { shaDiag:true, commit: env.CF_PAGES_COMMIT_SHA || "none", branch: env.CF_PAGES_BRANCH || "none" });
+    }
+  } catch(__se){}
   const ENV = {
     SUPABASE_URL: env.SUPABASE_URL || env.neocryptz_final_url || '',
     SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_KEY || env.SUPABASE_ANON_KEY || env.neocryptz_final_anon || env.NEOCRYPTZ_FINAL_ANON || env.neocryptz_final_supabase_anon || "",
