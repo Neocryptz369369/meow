@@ -6666,22 +6666,29 @@ function startAdCooldown(seconds, btn) {
   try {
     if(document.readyState==="loading"){ document.addEventListener("DOMContentLoaded", boot); }
     else { boot(); }
-    setInterval(load, 300000);
-    /* rotation timing is admin-controlled via app_settings.tiktok_rotation_seconds (default 15s) */
-    var ROT_MS = 15000;
-    function loadRotSetting(){
-      try {
-        if(window.supabaseClient && window.supabaseClient.from){
-          window.supabaseClient.from("app_settings").select("value").eq("key","tiktok_rotation_seconds").maybeSingle()
-            .then(function(res){ try { var v = res && res.data ? parseInt(res.data.value,10) : 0; if(v && v>=2 && v<=600){ ROT_MS = v*1000; } } catch(e){} })
-            .catch(function(){});
-        }
-      } catch(e){}
-    }
-    loadRotSetting();
-    setInterval(loadRotSetting, 60000);
-    (function tick(){ try{ if(pool.length){ rot=(rot+SLOTS.length)%(pool.length||1); paint(); } }catch(e){} setTimeout(tick, ROT_MS); })();
-    setTimeout(boot, 800); setTimeout(boot, 2500);
+      setInterval(load, 300000);
+      /* rotation timing is admin-controlled via app_settings.tiktok_rotation_seconds (default 15s, min 3s) */
+      var ROT_MS = 15000;
+      function loadRotSetting(){
+        try {
+          if(window.supabaseClient && window.supabaseClient.from){
+            window.supabaseClient.from("app_settings").select("value").eq("key","tiktok_rotation_seconds").maybeSingle()
+              .then(function(r){ try { var v = r && r.data && r.data.value; var n = parseInt(v,10); if(!isNaN(n)){ if(n<3)n=3; if(n>600)n=600; ROT_MS = n*1000; } } catch(e){} })
+              .catch(function(){});
+          }
+        } catch(e){}
+      }
+      loadRotSetting();
+      setInterval(loadRotSetting, 20000);
+      var __rotRunning = false;
+      function rotLoop(){
+        try { paint(); } catch(e){}
+        try { setTimeout(rotLoop, (typeof ROT_MS==="number" && ROT_MS>=3000) ? ROT_MS : 15000); } catch(e){}
+      }
+      function startRot(){ if(__rotRunning) return; __rotRunning = true; try { setTimeout(rotLoop, (typeof ROT_MS==="number" && ROT_MS>=3000) ? ROT_MS : 15000); } catch(e){} }
+      boot();
+      setTimeout(function(){ boot(); startRot(); }, 1200);
+      setTimeout(function(){ boot(); startRot(); }, 3000);
   } catch(e){}
 })();
 </script>
