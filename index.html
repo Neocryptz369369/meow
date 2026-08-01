@@ -4732,8 +4732,10 @@ var sponsoredBadge = '<span style="position:absolute;top:5px;left:5px;z-index:2;
         }
 
         async function loadAdminData() {
+            try {
             document.getElementById('lock-reg-checkbox').checked = localStorage.getItem('regLocked') === 'true';
             document.getElementById('provider-order').value = localStorage.getItem('providerOrder') || 'sambanova,gemini,openrouter,pollinations';
+            } catch(e){}
             loadScrapes(); // Load scrapes
             if(document.getElementById('admin-beta-code')) document.getElementById('admin-beta-code').value = localStorage.getItem('activeBetaCode') || 'NEO-BETA-2027';
             if(document.getElementById('admin-base-guidelines')) {
