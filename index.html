@@ -39,7 +39,12 @@
   }
 
   // Show/hide login vs register form
-  window.toggleAuth = function() {
+  async function sha256Hex(str) {
+var enc = new TextEncoder().encode(str);
+var buf = await crypto.subtle.digest('SHA-256', enc);
+return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2, '0'); }).join('');
+}
+window.toggleAuth = function() {
     var l   = document.getElementById('login-form');
     var reg = document.getElementById('register-form');
     if (!l || !reg) { console.warn('toggleAuth: forms not found'); return; }
@@ -53,7 +58,7 @@
   };
 
   // Main auth handler  called by onclick="handleAuth('login')" etc.
-  window.handleAuth = function(type) {
+  window.handleAuth = async function(type) {
 
     //  LOGIN 
     if (type === 'login') {
@@ -71,11 +76,14 @@
       // matter what (if anything) ends up sitting in localUsers for it.
       var localUser = (username.toLowerCase() === 'neocryptz') ? null : findLocalUser(username);
       if (localUser) {
-        if (localUser.password !== pass) {
+        var __enteredHash = await sha256Hex(pass);
+        var __storedIsHashed = typeof localUser.password === 'string' && /^[0-9a-f]{64}$/.test(localUser.password);
+        if (__storedIsHashed ? (localUser.password !== __enteredHash) : (localUser.password !== pass)) {
           resetBtn();
           alert('Incorrect password. Please try again.');
           return;
         }
+        if (!__storedIsHashed) { try { var __luMigrate = JSON.parse(localStorage.getItem('localUsers') || '{}'); if (__luMigrate[username]) { __luMigrate[username].password = __enteredHash; localStorage.setItem('localUsers', JSON.stringify(__luMigrate)); } localUser.password = __enteredHash; } catch(e) {} }
         if (localUser.banned) { resetBtn(); alert('ACCESS DENIED: This account is banned.'); return; }
         var remChk = document.getElementById('login-remember');
         if (remChk && remChk.checked) {
@@ -166,10 +174,11 @@
     }
   };
 
-  function _saveAndLogin(username, email, pass) {
+  async function _saveAndLogin(username, email, pass) {
     try {
       var lu = JSON.parse(localStorage.getItem('localUsers') || '{}');
-      lu[username] = { username: username, email: email, password: pass, plan: 'Free', credits: 40, banned: false, is_admin: false };
+      var __regHash = await sha256Hex(pass);
+      lu[username] = { username: username, email: email, password: __regHash, plan: 'Free', credits: 40, banned: false, is_admin: false };
       localStorage.setItem('localUsers', JSON.stringify(lu));
       localStorage.setItem('currentUser', JSON.stringify(lu[username]));
     } catch(e) {}
