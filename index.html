@@ -2789,6 +2789,7 @@ window.toggleAuth = function() {
                     //  Run the pipeline 
                     _makePipeline();
                     const _isRead = actionJson.action === 'list_repos' || actionJson.action === 'read_file_excerpt';
+                    const _isRunCode = actionJson.action === 'run_code';
 
                     //  Live broadcast setup 
                     var _liveSessId = (currentUser.username + '_' + Date.now()).replace(/[^a-z0-9_]/gi,'_');
@@ -2879,6 +2880,29 @@ window.toggleAuth = function() {
                                 aiText = eD2.message || '';
                             }
 
+                        } else if (_isRunCode) {
+                            _step('c1', `Running ${actionJson.language || 'code'} in sandbox...`, 'active');
+                            const rcR = await fetch('/api/run-code', {
+                                method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${currentToken}`},
+                                body: JSON.stringify({ language: actionJson.language, code: actionJson.code })
+                            });
+                            const rcD = await rcR.json();
+                            if (!rcR.ok || !rcD.success) { _setStep('c1', 'error', rcD.error || 'Code execution failed'); _stopAll(); return; }
+                            _setStep('c1', 'done', 'Code ran — exit code ' + rcD.exit_code);
+                            _showWorkPanel('📤', 'Output', (rcD.stdout || '(no stdout)') + (rcD.stderr ? '\n\nSTDERR:\n' + rcD.stderr : ''), '#a855f7');
+
+                            _step('c2', 'AI reviewing the output...', 'active');
+                            const cR = await fetch('/api/chat', {
+                                method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${currentToken}`},
+                                body: JSON.stringify({
+                                    prompt: '[SYSTEM RESULT] Code execution finished (exit code ' + rcD.exit_code + ').\nSTDOUT:\n' + (rcD.stdout || '(empty)') + '\nSTDERR:\n' + (rcD.stderr || '(empty)') + '\n\nNow respond to the user about this result in plain text — do not output another <<<EXEC>>> block unless they asked for something further.',
+                                    keys: keysPayload, history: historyPayload, username: currentUser?.username
+                                })
+                            });
+                            const cD = await cR.json();
+                            _setStep('c2', 'done', 'Response ready');
+                            aiText = (cD.result || '').replace(/<<<EXEC>>>[\s\S]*?<<<END_EXEC>>>/g, '').trim();
+                            if (aiText) appendMessage('assistant', aiText); else aiText = rcD.stdout || '(no output)';
                         } else {
                             //  DIRECT PUSH / INJECT / PATCH flow 
                             _step('d1', `Reading ${actionJson.path || 'file'} from GitHub...`, 'active');
